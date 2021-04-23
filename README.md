@@ -229,13 +229,29 @@ spring:
 	}
 ```
 
-前端的location就直接绝对定位到对应的项目dist下，后端就直接根据端口号代理即可。
+前端的location就直接绝对定位到对应的项目`dist/`下，后端就直接根据端口号代理即可。
 
-## 权限验证
+> **注意**
+>
+> Nginx的代理是需要在`proxy_pass http://localhost:8095/`后面这个地址的最后加上`/`，这样就是代理。如果`proxy_pass	http://localhost:8095`没有加上`/`，就是转发。
+>
+> **区别**
+>
+> 比如我从浏览器客户端发起了一个`localhost:8095/assets-server/image/test.jpg`的请求：
+>
+> 如果是代理的话，Nginx会先匹配到`location /assets-server/`然后就会直接将`/assets-server/`用这个`localhost:8095`的服务（以Jar包形式启动的SpringBoot项目）替代，即用户实际上会访问的是`localhost:8095`这个服务，或者说是`8095`端口下的`/`服务。
+>
+> 如果是转发，Nginx同样会匹配到`location /assets-server/`然后直接将`8095`这个端口号下的`/assets-server/`服务转发给用户，即用户实际上访问到的会是`8095`端口下的`/assets-server/`服务。
+
+## <span id="auth">权限验证</span>
 
 ### 后端
 
-利用JWT来贯穿全后端，然后利用每个SpringBoot-web的HandlerInterceptor（拦截器），在拦截器中验证是否存在token，并且验证token的有效性、token中存的用户的角色等来判断是否允许请求，并且返回相应的response（没有采用fastjson，听说bug太多）。同时在WebMvcConfigurer里注册该拦截器，并且配置好哪些请求需要拦截，哪些请求不需要拦截。
+#### JWT
+
+关于JWT可以参看：[JWT认证原理，并整合SpringBoot](https://blog.csdn.net/weixin_45747080/article/details/111684442)
+
+利用JWT来贯穿全后端，然后利用每个SpringBoot-web的HandlerInterceptor（拦截器），在拦截器中验证是否存在token，并且验证token的有效性、token中存的用户的角色等来判断是否允许请求，并且返回相应的response。同时在WebMvcConfigurer里注册该拦截器，并且配置好哪些请求需要拦截，哪些请求不需要拦截。
 
 ```java
 @Component
@@ -402,7 +418,7 @@ export default {
 - 为什么要用md5算法？因为md5是不可逆的。
 - 为什么要使用随机salt？避免撞库。
 
-## 静态资源
+## <span id='resources'>静态资源</span>
 
 利用SpringBoot-web启动了一个只存放静态资源的服务。
 
@@ -600,18 +616,495 @@ GPS定位仪器放置在车辆上，设置一定时间间隔获取来自GPS的�
 
 ![image-20210422183032592](img/image-20210422183032592.png)
 
-因为工程用具的类型是直接绑定的类型编号，所以即使类型修改后，工程用具的类型也会跟着修改。
+因为工程用具的类型是直接绑定的类型编号，所以即使类型修改后，工程用具的类型也会跟着修改。同时在扫码录入工程用具信息的时候也会随之更新。
 
 ## 系统权限
 
+本项目权限划分主要用角色和用户来划分。
+
+### 角色
+
+角色类似于用户组的概念，就是某个角色能够访问哪些页面，某个角色能够进行哪些操作。目前角色只细分到了用户能够进行具体哪一个操作上（比如：增删改用户），同时还能够新增角色（v1.6）。目前暂不支持新增角色后然后给角色指定哪些页面能够访问哪些操作能够进行。
+
+#### 效果图
+
+##### 展示
+
+![image-20210422202723968](img/image-20210422202723968.png)
+
+##### 修改
+
+![image-20210422202738878](img/image-20210422202738878.png)
+
+##### 新增
+
+![image-20210422202833620](img/image-20210422202833620.png)
+
+### 用户
+
+用户就是能够登录系统的最小单元。通过指定给用户分配角色来指定用户能够访问什么页面，进行什么操作。同时在前面的<a href="#auth">权限验证</a>有讲过我是怎样做到前后端互相联调实现权限验证的。
+
+#### 效果图
+
+##### 展示
+
+![image-20210422202804804](img/image-20210422202804804.png)
+
+##### 条件查询
+
+同时还可以按角色直接快速查询用户
+
+![image-20210422203010083](img/image-20210422203010083.png)
+
+##### 修改
+
+![image-20210422202856227](img/image-20210422202856227.png)
+
+##### 新增
+
+![image-20210422202912609](img/image-20210422202912609.png)
+
 ## 日志管理
+
+由SpringBoot-AOP实现，细分到controller上的方法，获得该方法的切面（只为增删改定义了切点），同时采用注解的方式给方法定义切点：方法上有注解的才会执行aop。同时在该切面的正常返回通知里来判断该方法是否执行成功、执行者、执行的客户端来源、执行者的IP地址、执行该操作的时间等。关于SpringBoot-AOP的切点、切面以及返回通知的解释请参看：
+
+### 效果图
+
+#### 展示
+
+![image-20210422203949714](img/image-20210422203949714.png)
+
+#### 条件查询
+
+同时能够利用执行者或者来源客户端进行快速查询日志
+
+![image-20210422204018170](img/image-20210422204018170.png)
+
+> **提示**
+>
+> 估计是Nginx正向代理的问题，直接将用户访问的真实IP经过正向代理后然后再经过反向代理到具体日志微服务中的时候直接将Nginx服务器的本机地址代理到服务当中去了。下个版本预计修复。
+>
+> **解决方案**
+>
+> 不用Nginx反向代理，使用Nginx直接转发到服务。
+
+### 注解
+
+定义注解，用于定义切点表明加了该注解的就是切面
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface CrudLog {
+    String value() default "";
+}
+```
+
+### AOP
+
+关于SpringBoot的AOP可以参看：[一张图搞懂SpringBoot AOP的5个通知的交织顺序](https://blog.csdn.net/weixin_45747080/article/details/114421918)，[Spring的AOP面向切面编程](https://blog.csdn.net/weixin_45747080/article/details/106364788)
+
+#### 使用方法
+
+在需要进行日志AOP的直接加上注解：`@CrudLog`
+
+```java
+@CrudLog("新增用户")
+@PostMapping("/insertUser")
+public ResultResponse insertUser(@RequestBody VoUser voUser){
+    //对获取到的参数进行处理
+    return new ResulteResponse()
+        ,setData(true)
+        .setMessage('')
+        .setCode(2000)
+}
+```
+
+加上了该注解的方法就能够直接作为切面，从而转交给AOP。
+
+#### 具体逻辑
+
+1、定义切点为`@CrudLog`注解：加上该注解的就是切面
+
+2、在正常返回通知中获得如下参数：（注：正常返回通知是方法正常执行没有异常时才会进行）
+
+- 操作名：该切点的注解值
+- 操作时间：当前时间（`new Date()`）
+- 执行者：从request的header中获得自定义的X-Token，利用JWT解开这个token获得其中的用户姓名
+- 执行者IP：从servlet的http处理器中获得request，然后从request中获得IP
+- 执行者客户端：从request的header中获得自定义的X-Client
+
+```java
+@Component
+@Slf4j
+@Aspect
+public class CrudAspect {
+    @Autowired
+    private LoggerService loggerService;
+
+    /**
+     * 定义切点为：CrudLog这个注释
+     */
+    @Pointcut("@annotation(com.blctek.userserver.anno.CrudLog)")
+    public void crudPointCut() { }//切入点签名
+
+
+    /**
+     * 正常返回通知（方法有正常返回值时）：（一般用这个）
+     * 在整个后置通知前，在整个前置通知后，与异常返回并列。
+     * 将返回值强转为ResultResponse，获得其中的data，如果data为true则证明操作成功，
+     * 再从切点里获得注解名称（也就是操作名），从handler中获得request再从request中获得ip，
+     * 再从header中根据X-Client和X-Token获得客户端名称和token，再从token中获得name（executor操作者）
+     *
+     * @param joinPoint   切点
+     * @param returnValue 正常返回值
+     */
+    @AfterReturning(pointcut = "crudPointCut()", returning = "returnValue")
+    public void crudAfterReturning(JoinPoint joinPoint, Object returnValue) {
+        ResultResponse resultResponse = (ResultResponse) returnValue; //将返回值强转为ResultResponse
+        Boolean data = (Boolean)resultResponse.getData();             //获取ResultResponse里的data
+        if (data){ //如果操作成功执行（操作成功会返回true）
+            MethodSignature signature = (MethodSignature)joinPoint.getSignature();
+            CrudLog annotation = signature.getMethod().getAnnotation(CrudLog.class);
+            String methodName = annotation.value();//将注解上的值赋值为操作名
+//            System.out.println("methodName = " + methodName);
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();//从解析器里获得request请求
+            String ip = request.getRemoteAddr();//从request请求中获得ip地址
+            String client = request.getHeader("X-Client");//从headers中取出客户端名称
+            String token = request.getHeader("X-Token");//从headers中取出token
+            Date time = new Date();//时间
+            String executor = "未知";//执行者
+            try {
+                executor = JWTUtils.getTokenInfo(token).getClaim("name").asString();
+            } catch (RuntimeException e){
+                executor = "未知";
+            }
+            insertLogger(methodName,time,executor,ip,client);
+        }
+
+    }
+
+    //操作名、操作时间、执行人、ip、来源客户端
+    private void insertLogger(String name, Date time, String executor, String ip, String client){
+        log.info("用户[{}]从[{}]客户端成功[{}]，时间是[{}]，ip地址是[{}]",
+                executor,client,name,time.toLocaleString(),ip);
+        Logger logger = new Logger();
+        logger.setName(name);
+        logger.setTime(time);
+        logger.setExecutor(executor);
+        logger.setIp(ip);
+        logger.setClient(client==null?"未知":client);
+        loggerService.insertLogger(logger);
+    }
+}
+```
+
+### 缺点
+
+采用的方法是直接将该条日志记录插入进MySQL的数据库中，这样对数据库访问资源造成了很大的浪费和占用，这样的效率不高，有可以改进的方案，比如放在内存中或者缓存中。
 
 ## 拓展功能
 
+自己写的可能跟项目本身没有太大联系的小组件。
+
+### 网络测速
+
+纯前后端分离的，利用Ajax的网络测速小组件。关于该组件的完整前后端可以参看：[speed-test测速组件（基于Vue、elementUI、Springboot）](https://github.com/FanGaoXS/speed-test)
+
+#### 测速原理
+
+##### 下载
+
+1. 访问位于服务端的静态资源（切记该资源不能太大，因为网速限制，如果太大会造成该次请求超时）
+2. 发起访问的时候获得此时的时间戳作为开始时间
+3. 请求资源结束的时候获得此时的时间戳作为结束时间
+4. 利用该静态资源的大小除以时间差，即可算出单位时间的资源下载量，即可算出下载的网速。
+
+##### 上传
+
+1. 利用POST向服务端发起一个请求（POST可以发送大请求，请求不需要太大，也不能太小，因为网速限制）
+2. 发起请求的时候记录下该时的时间戳作为开始时间
+3. 请求从服务端返回的时间作为结束时间
+4. 利用该上传请求的大小除以时间差，即可算出单位时间的资源上传量，即可算出上传的网速。
+
+#### 代码实现
+
+##### 下载
+
+###### 后端
+
+直接将静态资源利用放置上面所提到的<a href='#resources'>静态资源</a>服务器上即可
+
+###### 前端
+
+```js
+download(){
+    let image = new Image(); //定义Image对象
+    let imageSrc=IMAGE_PREFIX_URL+'speed/test.JPG';
+    let imageSize=7984555;
+    image.src = imageSrc + '?n=' +Math.random(); //随机访问该图片资源
+    let startTime = new Date().getTime(); //开始下载时的时间戳
+    image.onload = () => { //图片加载完时会执行的回调函数
+        let endTime = new Date().getTime(); //完成下载的时的时间
+        /*console.log('startTime',startTime);
+          console.log('endTime',endTime);*/
+        // console.log('延迟',endTime-startTime,'ms'); //误差为6ms
+        let diffSeconds = (endTime - startTime)/1000; //差时间转为秒
+        let speedBps = (imageSize/diffSeconds)*8; //每秒下载多少B的资源
+        let speedKBps = speedBps / 1024;  //每秒下载多少KB（千B）的资源
+        let speedMbps = speedKBps / 1024; //每秒下载多少MB（兆B）的资源
+        console.log('['+this.count/10+']'+'下载速率',speedMbps,'Mbps');
+        //将该次测速得到的速率追加到速率速组里
+        this.speedArray.push(speedMbps);
+        // delete image; //下载完成后删除该图片资源
+        if (this.count<this.maxCount){//如果没有到达最大次数，则依然执行
+            this.startDownload();
+        } else {
+            this.flag = false;
+        }
+    };
+},
+```
+
+##### 上传
+
+###### 后端
+
+```java
+@RestController
+@CrossOrigin("*")
+@RequestMapping("/speed")
+@Slf4j
+public class SpeedController {
+    @PostMapping("/uploadTest")
+    public ResultResponse uploadSpeedTest(HttpServletRequest request){
+        long contentLength = request.getContentLengthLong();//该请求的contentLength
+        log.info("contentLength->[{} Byte]",contentLength);
+        log.info("contentLength->[{} Kb]",contentLength/1024);
+        log.info("contentLength->[{} Mb]",contentLength/1024/1024);
+        Content content = new Content();
+        content.setContentLength(contentLength);
+        return new ResultResponse()
+                .setData(content)
+                .setMessage("测试客户端到服务端的上传速率");
+    }
+}
+```
+
+###### 前端
+
+```js
+upload(){
+    let startTime = new Date().getTime();
+    // console.log('startTime->',startTime);
+    let text =`A`;   //一个字母大小为1字节Byte
+    let totalText ;
+    for (let i = 0; i < 1024 * 1024 * 2; i++) {
+        totalText+=text; //post大小为2M的请求
+    }
+    let formData = new FormData();
+    formData.append('text',totalText);
+    uploadSpeedTest(formData).then(res=>{
+        let endTime = new Date().getTime()
+        // let endTime = res.data.endTime;
+        let contentLength = res.data.contentLength;
+        let diffTime = endTime-startTime;
+        let speedBps = (contentLength*8)/(diffTime/1000);
+        let speedKbps = speedBps / 1024 ;
+        let speedMbps = speedKbps / 1024 ;
+        console.log('['+this.count/20+']'+'上行速率',speedMbps,'Mbps（仅供参考）');
+        //将该次测速得到的速率追加到速率速组里
+        this.speedArray.push(speedMbps);
+        if (this.count<this.maxCount){//如果没有到达最大次数，则依然执行
+            this.startUpload();
+        } else {
+            this.flag = false;
+        }
+    }).catch(err=>{
+        this.isError=true;
+        this.flag = false;
+        console.log(err);
+    })
+},
+```
+
+> **单位换算**
+>
+> 上传和下载的资源大小单位是Byte字节，以网速换算单位就是需要乘8然后除以单位时间：
+>
+> ```yaml
+> bps  		#字节/每秒
+> Kbps		#K/每秒 		Kbps = bps/1024
+> Mbps		#兆/每秒	   Mbps = Kbps/1024
+> ```
+
+## 分页实现
+
+分页一直以来都是前后端开发中比较有趣且难得一个点。本项目采用的是前后端联合实现的分页查询。
+
+### 逻辑
+
+后端持久层在查询列表数据的时候就利用MyBatis定义好分页的SQL预处理语句，查询的时候如果传递再传递当前页和每页多少记录就可以了，为了避免两个都为空而查询所有表耗费大量查询资源，所以默认情况是当前页为1，每页记录数为10。
+
+前端得益于Vue.js的动态绑定的特性，所以每次修改当前页和记录数就可以重新发起请求然后再次填充页面数据。
+
+### 代码实现
+
+因为基本上的所有数据库实体都可能需要使用到分页功能，所以考虑到代码复用性和可维护性，我便定义了公共的POJO（[后端的公共组件](#public)），需要用到分页功能的实体对象只需要继承他就可以了。
+
+BasePojo.java：
+
+```java
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class BasePojo implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 当前页（分页查询）
+     */
+    private Integer currentPage;
+
+    /**
+     * 每页记录数（分页查询）
+     */
+    private Integer pageSize;
+
+}
+```
+
+User.java：
+
+```java
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class User extends BasePojo {
+    /**
+     * 用户自增主键
+     */
+    private Integer id;
+
+    /**
+     * 用户名
+     */
+    private String username;
+
+}
+```
+
+需要分页的实体对象只需要继承BasePojo就好。
+
+MyBatis预处理语句：
+
+UserMapper.java:
+
+```java
+@Mapper
+@Repository
+public interface UserMapper {
+
+    /**
+     * 查询所有user集合（可分页，可多条件，可单条件）
+     * @param user 用户对象
+     * @return user集合
+     */
+    List<User> selectList(User user);
+
+    /**
+     * 查询记录数（可条件查询）
+     * @param user  用户对象
+     * @return  记录数
+     */
+    Long count(User user);
+
+}
+
+```
+
+
+
+UserMapper.xml：
+
+```xml
+<mapper namespace="UserMapper">
+    <!--分页的条件sql（当前页，每页记录数）-->
+    <sql id="limitCondition">
+        <if test=" currentPage!=null and currentPage!='' and pageSize!=null and pageSize!='' ">
+            <bind name="offset" value="pageSize*(currentPage-1)"/>
+            <bind name="rows" value="pageSize"/>
+            #{offset},#{rows}
+        </if>
+    </sql>
+    <!--查询所有（可分页，可单条件，可多条件）-->
+    <select id="selectList"
+            parameterType="User"
+            resultMap="userMap">
+        SELECT
+        	#查询列
+        FROM
+        	user u
+            <trim prefix="WHERE" prefixOverrides="AND">
+                #查询条件
+        </trim>
+        ORDER BY
+        	id
+        <trim prefix="LIMIT">
+            <include refid="limitCondition"></include>
+        </trim>
+    </select>
+    <!--查询记录数（可单条件，可多条件）-->
+    <select id="count"
+            parameterType="User"
+            resultType="long">
+        SELECT
+        	count(id)
+        FROM
+        	user
+        <trim prefix="WHERE" prefixOverrides="AND">
+        	#查询条件
+        </trim>
+    </select>
+</mapper>
+```
+
+先利用`<sql>`标签定义好了分页的语句，需要注意的是，MySQL的分页语句是`LIMIT offset,rows`从哪条记录开始，多少条记录，由于我为了方便理解，我就利用`<bind>`标签将offset和rows将我传入的pageSize和currentPage进行换算，就能得到offset和rows：
+
+```
+offset = pageSize * (currentPage - 1)  		#偏移起始下标=每页记录数x（当前页-1）
+rows = pageSize
+```
+
+
+
 ## 前端手册
+
+TODO
 
 ### 网络请求
 
 ## 后端手册
 
-### 公共组件
+TODO
+
+### 项目结构
+
+### <span id='public'>公共组件</span>
+
+### 数据库设计
+
+### 数据实体（POJO）
+
+### 数据持久层（Dao）
+
+### 业务层（Service）
+
+### 视图对象（Vo）
+
+## 缺陷（待更新）
+
+TODO
+

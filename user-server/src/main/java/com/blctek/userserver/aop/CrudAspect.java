@@ -78,9 +78,6 @@ public class CrudAspect {
 
     //操作名、操作时间、执行人、ip、来源客户端
     private void insertLogger(String name, Date time, String executor, String ip, String client){
-        if (client==null){//如果client为null则从未知客户端操作
-            client = "未知";
-        }
         log.info("用户[{}]从[{}]客户端成功[{}]，时间是[{}]，ip地址是[{}]",
                 executor,client,name,time.toLocaleString(),ip);
         Logger logger = new Logger();
@@ -88,7 +85,7 @@ public class CrudAspect {
         logger.setTime(time);
         logger.setExecutor(executor);
         logger.setIp(ip);
-        logger.setClient(client);
+        logger.setClient(client==null?"未知":client);
         loggerService.insertLogger(logger);
     }
 }

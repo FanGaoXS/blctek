@@ -249,14 +249,14 @@ export default {
   created() {
     //组件初始化完成后取得数据并且填充
     this.fetchOptions();
-    this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize);
+    this.fetchList();
   },
   methods: {
 
     //分页组件中当前页改变时
     handleCurrentChange(){
       //根据当前页和每页记录数重新拉取数据
-      this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+      this.fetchList()
     },
 
     handleUpdate(row,index){
@@ -319,7 +319,10 @@ export default {
           type: 'success',
           message: '删除车辆信息成功！'
         })
-        this.handleCurrentChange()
+        if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
+          this.listQuery.currentPage-- //则页码减一
+        }
+        this.fetchList()
         this.buttonLoading = false;
       }).catch(error=> {
         console.log(error);
@@ -334,9 +337,9 @@ export default {
       const { data:modelList } = await getModelByVehicle() //同步获取类型列表
       this.options = modelList.items
     },
-    async fetchList(currentPage,pageSize){
+    async fetchList(){
       this.listLoading = true
-      const { data:vehicleList } = await getVehicleList(currentPage,pageSize) //同步获取车辆列表
+      const { data:vehicleList } = await getVehicleList(this.listQuery.currentPage,this.listQuery.pageSize) //同步获取车辆列表
       this.list = vehicleList.items
       this.listQuery.currentPage = vehicleList.currentPage
       this.listQuery.pageSize = vehicleList.pageSize

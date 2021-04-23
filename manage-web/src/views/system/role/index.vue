@@ -189,7 +189,7 @@
       }
     },
     created() {
-      this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+      this.fetchList()
     },
     methods: {
       // 清空对话框表单
@@ -235,7 +235,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+              this.fetchList()
             }).catch(error=>{
               this.buttonLoading = false
             })
@@ -253,7 +253,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+              this.fetchList()
             }).catch(error=>{
               this.buttonLoading = false
             })
@@ -266,15 +266,18 @@
             title: '成功',
             message: res.message + ' 成功！'
           })
-          this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+          if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
+            this.listQuery.currentPage-- //则页码减一
+          }
+          this.fetchList()
         })
       },
       handleListQueryChange(){
-        this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+        this.fetchList()
       },
-      async fetchList(currentPage,pageSize) {
+      async fetchList() {
         this.listLoading = true
-        const { data:roleList } = await getRoleList(currentPage,pageSize)
+        const { data:roleList } = await getRoleList(this.listQuery.currentPage,this.listQuery.pageSize)
         this.list = roleList.items
         this.listQuery.currentPage = roleList.currentPage
         this.listQuery.pageSize = roleList.pageSize

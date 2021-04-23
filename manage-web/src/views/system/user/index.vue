@@ -232,7 +232,7 @@
     },
     created() {
       this.fetchRoleOptions();
-      this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
+      this.fetchList();
     },
     methods: {
       // 清空对话框表单
@@ -285,7 +285,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
+              this.fetchList();
             }).catch(error=>{
               console.log(error)
               this.buttonLoading = false
@@ -304,7 +304,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
+              this.fetchList();
             }).catch(error=>{
               console.log(error)
               this.buttonLoading = false
@@ -318,16 +318,19 @@
             title: '成功',
             message: res.message + ' 成功！'
           })
-          this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
+          if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
+            this.listQuery.currentPage-- //则页码减一
+          }
+          this.fetchList();
         })
       },
       handleListQueryChange(){
-        this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
+        this.fetchList();
       },
       //拉取表格数据
-      async fetchList(roleId,currentPage,pageSize) {
+      async fetchList() {
         this.listLoading = true
-        const { data:userList } = await getUserList(roleId,currentPage,pageSize)
+        const { data:userList } = await getUserList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize)
         this.list = userList.items
         this.listQuery.currentPage = userList.currentPage
         this.listQuery.pageSize = userList.pageSize

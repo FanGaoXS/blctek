@@ -140,16 +140,16 @@ export default {
   },
   created() {
     // 组件被创建时填充数据
-    this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+    this.fetchList()
   },
   methods: {
     handleCurrentChange(){
-      this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+      this.fetchList()
     },
     // 填充数据
-    async fetchList(currentPage,pageSize) {
+    async fetchList() {
       this.listLoading = true
-      const { data:modelList } = await getModelByMachine(currentPage,pageSize)
+      const { data:modelList } = await getModelByMachine(this.listQuery.currentPage,this.listQuery.pageSize)
       this.list = modelList.items;
       this.listQuery.pageSize = modelList.pageSize
       this.listQuery.currentPage = modelList.currentPage
@@ -231,7 +231,10 @@ export default {
           type: 'success',
           message: '删除类型成功'
         })
-        this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+        if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
+          this.listQuery.currentPage-- //则页码减一
+        }
+        this.fetchList()
       }).catch(error=>{
         console.log(error);
         this.$notify({

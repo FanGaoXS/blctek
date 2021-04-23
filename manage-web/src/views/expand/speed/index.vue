@@ -163,8 +163,7 @@
         let imageSize=7984555;
         image.src = imageSrc + '?n=' +Math.random(); //随机访问该图片资源
         let startTime = new Date().getTime(); //开始下载时的时间戳
-        let that = this;
-        image.onload = function () { //图片加载完时会执行的回调函数
+        image.onload = () => { //图片加载完时会执行的回调函数
           let endTime = new Date().getTime(); //完成下载的时的时间
           /*console.log('startTime',startTime);
           console.log('endTime',endTime);*/
@@ -173,14 +172,14 @@
           let speedBps = (imageSize/diffSeconds)*8; //每秒下载多少B的资源
           let speedKBps = speedBps / 1024;  //每秒下载多少KB（千B）的资源
           let speedMbps = speedKBps / 1024; //每秒下载多少MB（兆B）的资源
-          console.log('['+that.count/10+']'+'下载速率',speedMbps,'Mbps');
+          console.log('['+this.count/10+']'+'下载速率',speedMbps,'Mbps');
           //将该次测速得到的速率追加到速率速组里
-          that.speedArray.push(speedMbps);
+          this.speedArray.push(speedMbps);
           // delete image; //下载完成后删除该图片资源
-          if (that.count<that.maxCount){//如果没有到达最大次数，则依然执行
-            that.startDownload();
+          if (this.count<this.maxCount){//如果没有到达最大次数，则依然执行
+            this.startDownload();
           } else {
-            that.flag = false;
+            this.flag = false;
           }
         };
       },
@@ -257,8 +256,6 @@
         })
 
       },
-
-
     },
   }
 </script>

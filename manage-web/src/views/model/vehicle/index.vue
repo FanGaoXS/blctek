@@ -163,9 +163,7 @@ export default {
         pageSize: 10,
         totalSize: 0
       },
-      list: [
-
-      ],
+      list: [ ],
       listLoading: true,
       dialogFormVisible: false,
       tempForm: { //  临时表
@@ -183,20 +181,21 @@ export default {
   },
   created() {
     // 组件被创建时填充数据
-    this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+    this.fetchList()
   },
   methods: {
+    checkPermission,
     dialogClose(){
       this.resetTemp()//对话框关闭时清空对话框表单
       this.$refs['dialogForm'].clearValidate() //清空对话框的验证
     },
     handleCurrentChange(){
-      this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+      this.fetchList()
     },
     // 填充数据
-    async fetchList(currentPage,pageSize) {
+    async fetchList() {
       this.listLoading = true
-      const { data:modelList } = await getModelByVehicle(currentPage,pageSize)
+      const { data:modelList } = await getModelByVehicle(this.listQuery.currentPage,this.listQuery.pageSize)
       this.list = modelList.items;
       this.listQuery.pageSize = modelList.pageSize
       this.listQuery.currentPage = modelList.currentPage
@@ -266,7 +265,7 @@ export default {
           this.buttonLoading = true
           updateModel(this.tempForm).then(res=>{
             this.dialogFormVisible = false;
-            this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+            this.fetchList()
             this.$notify({
               type: 'success',
               message: '修改类型成功！'
@@ -290,7 +289,10 @@ export default {
           type: 'success',
           message: '删除类型成功'
         })
-        this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+        if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
+          this.listQuery.currentPage-- //则页码减一
+        }
+        this.fetchList()
       }).catch(error=>{
         console.log(error);
         this.$notify({
@@ -299,8 +301,7 @@ export default {
         })
       })
     },
-    checkPermission
-  }
+  },
 }
 </script>
 <style>
