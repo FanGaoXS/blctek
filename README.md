@@ -939,19 +939,635 @@ upload(){
 > Mbps		#兆/每秒	   Mbps = Kbps/1024
 > ```
 
-## 分页实现
+## <span id='pagination'>分页实现</span>
 
 分页一直以来都是前后端开发中比较有趣且难得一个点。本项目采用的是前后端联合实现的分页查询。
 
 ### 逻辑
 
-后端持久层在查询列表数据的时候就利用MyBatis定义好分页的SQL预处理语句，查询的时候如果传递再传递当前页和每页多少记录就可以了，为了避免两个都为空而查询所有表耗费大量查询资源，所以默认情况是当前页为1，每页记录数为10。
+**后端**持久层在查询列表数据的时候就利用MyBatis定义好分页的SQL预处理语句，查询的时候如果传递再传递当前页和每页多少记录就可以了，为了避免两个都为空而查询所有表耗费大量查询资源，所以默认情况是当前页为1，每页记录数为10。同时利用SQL语句查询总记录数，就能很好地协调前端根据当前页、每页记录数、总记录数获得总共有多少页。
 
-前端得益于Vue.js的动态绑定的特性，所以每次修改当前页和记录数就可以重新发起请求然后再次填充页面数据。
+**前端**得益于Vue.js的动态绑定的特性，所以每次修改**当前页**和**记录数**就可以重新发起请求然后再次填充页面数据。
 
-### 代码实现
+前端访问后端的时候只需要得到**当前页、每页记录数、总记录数**就可以了。
+
+## 前端手册
+
+前端主要用到的技术栈：Vue.js、vuex、vue-router、axios、element-ui
+
+### 项目结构
+
+具体可以参看：[vue-element-admin的目录结构](https://panjiachen.gitee.io/vue-element-admin-site/zh/guide/#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84)
+
+```sh
+├── build                      # 构建相关
+├── mock                       # 项目mock 模拟数据
+├── plop-templates             # 基本模板
+├── public                     # 静态资源
+│   │── favicon.ico            # favicon图标
+│   └── index.html             # html模板
+├── src                        # 源代码
+│   ├── api                    # 所有请求
+│   ├── assets                 # 主题 字体等静态资源
+│   ├── components             # 全局公用组件
+│   ├── directive              # 全局指令
+│   ├── filters                # 全局 filter
+│   ├── icons                  # 项目所有 svg icons
+│   ├── lang                   # 国际化 language
+│   ├── layout                 # 全局 layout
+│   ├── router                 # 路由
+│   ├── store                  # 全局 store管理
+│   ├── styles                 # 全局样式
+│   ├── utils                  # 全局公用方法
+│   ├── vendor                 # 公用vendor
+│   ├── views                  # views 所有页面
+│   ├── App.vue                # 入口页面
+│   ├── main.js                # 入口文件 加载组件 初始化等
+│   └── permission.js          # 权限管理
+├── tests                      # 测试
+├── .env.xxx                   # 环境变量配置
+├── .eslintrc.js               # eslint 配置项
+├── .babelrc                   # babel-loader 配置
+├── .travis.yml                # 自动化CI配置
+├── vue.config.js              # vue-cli 配置
+├── postcss.config.js          # postcss 配置
+└── package.json               # package.json
+```
+
+
+
+### 网络请求
+
+前端的网络请求主要采用的是axios，然后本项目再将axios进行了二次封装，主要封装了request拦截器和response拦截器，能够对全局的request和response做出响应。关于axios可以参看[Vue.js之axios的使用](https://blog.csdn.net/weixin_45747080/article/details/109817118#t95)
+
+对axios的封装位于`@/utils/request.js`，具体的网络请求位于`@/api/xxx.js`，建议api下最后按照model来分。
+
+#### 全局配置
+
+主要配置axios的全局参数，如baseURL和timeout等
+
+```js
+//axios实例
+const axiosInstance = axios.create({
+  baseURL: process.env.VUE_APP_BASE_URL, // url = base url + request url
+  timeout: 5000 // request timeout
+})
+```
+
+#### request拦截器
+
+request拦截器就是在每一个http请求发出的时候都会对config进行操作，如：在config的headers中添加自定义的客户端标识X-Client以及携带自定义的X-Token
+
+```js
+/**
+ * request拦截器：在发送每一个请求前都在headers里加上Manage-Token
+ */
+axiosInstance.interceptors.request.use(
+  config => {
+    config.headers['X-Client'] = 'manage-web' //在headers中添加设备标识
+    if (store.getters.token) { //已经登录成功才会执行该if
+      //让每一个request的headers里携带一个token（其中token从本地的cookies中获取）
+      config.headers['X-Token'] = getToken()
+    }
+    // console.log(config)
+    return config
+  },
+  error => {
+    console.log('request interceptors error',error) // for debug
+    return Promise.reject(error)
+  }
+)
+```
+
+#### response拦截器
+
+由于axios对于http请求再加了一层，所以其实我们从后端接收到的真正数据应该是`response.data`，response拦截器可以在数据返回的时候判断数据中的状态码（自定义异常），然后对自定义异常进行一些相应的判断并且利用element-ui的message进行弹窗提示。
+
+```js
+// response拦截器
+axiosInstance.interceptors.response.use(
+  response => {
+    const res = response.data
+
+    if (res.code !== 20000 && res.code!==0 ) {
+      Message({
+        message: res.message || '错误！请联系管理员',
+        type: 'error',
+        duration: 5 * 1000
+      })
+
+      // 50008: 非法的token; 50012: 其他客户端已经登录; 50014: token过期;
+      if (res.code === 50008 || res.code === 50012 || res.code === 50014) {
+        // 重新登录
+        MessageBox.confirm('你已经退出，你可以选择取消留在此页面或者重新登录', '确认退出', {
+          confirmButtonText: '重新登录',
+          cancelButtonText: '取消登录',
+          type: 'warning'
+        }).then(() => {
+          store.dispatch('user/resetToken').then(() => {
+            location.reload()
+          })
+        })
+      }
+      return Promise.reject(new Error(res.message || '错误！'))
+    } else {
+      return res
+    }
+  },
+  error => {
+    console.log('response interceptors error->' + error) // for debug
+    Message({
+      message: '网络连接错误：'+error.message,
+      type: 'error',
+      duration: 5 * 1000
+    })
+    return Promise.reject(error)
+  }
+)
+```
+
+#### 请求
+
+`@/utils/user.js`
+
+```js
+import request from '@/utils/request'
+
+export function getUser(id) {
+  return request({
+    url: 'user-server/user/selectUserById',
+    method: 'GET',
+    params: {
+      id
+    }
+  })
+}
+```
+
+直接传入对应的url、method和params就可以了。
+
+#### 使用
+
+先利用import导入该请求，然后直接利用Promise就可以使用了。
+
+```vue
+<template>
+  <div>
+    <el-button @click="buttonClick"></el-button>
+  </div>
+</template>
+
+<script>
+  import {
+    getUser
+  } from "@/api/user/user";
+
+  export default {
+    name: "index2",
+    methods: {
+      buttonClick() {
+        const id = 10
+        getUser(id).then(res=>{
+          console.log(res)
+        }).catch(error=>{
+          console.log(error)
+        })
+      }
+    },
+  }
+</script>
+
+```
+
+### 全局状态管理
+
+主要是利用Vue.js的一个核心组件vuex实现，存储一些凌驾于页面之上的，存在于整个应用的变量或者方法，比如：用户的编号、用户的姓名、用户的token、用户的一些偏好设置等。关于vuex请参看：[Vue.js之vuex](https://blog.csdn.net/weixin_45747080/article/details/109817118#t74)
+
+```
+│  getters.js
+│  index.js						#主入口
+│
+└─modules
+        app.js					#应用的相关设置
+        permission.js			#权限相关
+        settings.js				#偏好
+        user.js					#用户信息相关
+
+```
+
+### 工具类
+
+工具方法都位于`@/utils/`下
+
+```sh
+    AMap.js						#异步加载高德地图原生JS API
+    auth.js						#token相关
+    get-page-title.js			#获得页面标题
+    global-filters.js			#全局filter
+    global-variable.js			#全局常量
+    index.js					
+    password.js					#密码（md5混淆）
+    permission.js				#权限相关
+    request.js					#axios封装的网络请求
+    validate.js					#相关内容的验证
+```
+
+
+
+## 后端手册
+
+后端主要基于SpringBoot、MyBatis
+
+### 项目结构
+
+项目直接利用SpringBoot Initializr构建
+
+```java
+├─main
+│  ├─java
+│  │  └─com
+│  │      └─xxx
+│  │          └─userserver
+│  │              ├─anno				#注解类
+│  │              ├─aop					#aspect切面
+│  │              ├─config				#配置类
+│  │              ├─controller			#控制器类
+│  │              ├─interceptor			#拦截器类
+│  │              ├─mapper				#对数据库的增删改查
+│  │              ├─pojo				#数据库实体类
+│  │              ├─service				#业务接口
+│  │              │  └─impl			   #业务接口实现
+│  │              ├─utils				#工具类
+│  │              └─vo					#视图对象
+│  └─resources							 #资源文件夹（会存放application配置文件）
+│      └─mybatis						
+│          └─mapper						 #MyBatis的XxxMapper.xml
+```
+
+`pojo`：主要存放与数据库表字段一一对应的实体类（重点是一一对应）。
+
+`mapper`：存放对数据库的增删改查的接口（基于MyBatis的规范）
+
+`service`：对mapper增删改查出来的数据进行进一步封装和处理。**处理数据**
+
+`controller`：控制网络请求的流程，然后返回处理后的数据。**控制流程**
+
+`aop`：基于spring-aop的实现，本项目主要用于处理日志。
+
+`interceptor`：Web的拦截器，主要处理请求，哪些允许过，哪些不允许过
+
+`config`：SpringBoot的配置，主要是手动启用SpringBoot的相关配置，该项目主要用于启用SpringMVC的Web拦截器。
+
+### <span id='public'>公共组件</span>
+
+依旧是采用SpringBoot Initializr构建。
+
+```sh
+└─main
+    ├─java
+    │  └─com
+    │      └─xxx
+    │          └─commonserver
+    │              ├─mapper
+    │              ├─pojo
+    │              ├─response
+    │              ├─utils
+    │              └─vo
+    └─resources
+        └─mybatis
+            └─mapper
+```
+
+#### 其他项目引入
+
+需要将公共组件的构建方式改为利用maven打包成依赖，并且生成不可执行的jar包，需要在`pom.xml`中将构建方式改为：
+
+`common-server/pom.xml`
+
+```xml
+<build>
+    <plugins>
+        <!--<plugin>&lt;!&ndash;将该项目打包成可执行的jar包，能够放在jre环境中运行&ndash;&gt;
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>-->
+        <plugin><!--将该项目打包成不可执行的jar依赖，这样就可以被其他项目所引入-->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+然后其他项目直接在`pom.xml`中将该项目作为依赖引入：
+
+`user-server/pom.xml`
+
+```xml
+<dependencies>
+
+    <dependency><!--公用模块-->
+        <groupId>com.xxx</groupId>
+        <artifactId>common-server</artifactId>
+        <version>1.2.5</version>
+    </dependency>
+
+</dependencies>
+```
+
+> **注意**
+>
+> 每次修改了公共组件（common-server）切记都需要利用maven打包成依赖，然后再在其他项目中引入。强烈建议修改了公共组件后修改pom文件里的版本号再打包，然后在引入的时候也修改为打包后的版本！！！
+
+#### 日志
+
+由于大多数后端项目中都需要对日志表进行增删改查，所以我就选择将日志实体类和日志DAO放置到公共组件当中。
+
+#### BasePojo
+
+上文的[分页实现](#pagination)中讲过，基本上所有的数据库实体都可能用到分页查询，所以将实现分页的基础pojo放置到公共组件的BasePojo中。由于Pojo继承了BasePojo，那么就可以直接使用set或者get来设置或者得到currentPage和pageSize，从而与该Pojo对象一起传入进Mapper中，然后进行符合条件的分页查询。（所以该BasePojo基本只在查询的时候使用）
+
+##### 使用方法
+
+```java
+@SpringBootTest
+@RunWith(SpringRunner.class)
+public class UserMapperTest {
+    @Autowired
+    private UserMapper userMapper;
+    @Test
+    public void selectList() {
+        String username = "admin";
+        Integer currentPage = 1;
+        Integer pageSize = 2;
+        User user = new User();
+        user.setCurrentPage(currentPage);
+        user.setPageSize(pageSize);
+        List<User> userList = userMapper.selectList(user);
+        for (User user1 : userList) {
+            System.out.println("user1 = " + user1);
+        }
+    }
+    @Test
+    public void selectList2() {
+        String username = "admin";
+        User user = new User();
+        List<User> userList = userMapper.selectList(user);
+        for (User user1 : userList) {
+            System.out.println("user1 = " + user1);
+        }
+    }
+}
+```
+
+只需要在new该对象的时候，传入currentPage和pageSize就能自动进行分页查询了，同时返回查询到的列表。
+
+如果你没有传入currentPage和pageSize，没关系，得益于MyBatis的特性：`<trim>`标签结合`<if>`标签的使用，如果没有传入currentPage和pageSize，那么该`<trim>`标签就意味着不会生效，也就是不会进行分页查询， 而是查询全表，但是我建议你不要这么做！！！可以参看[分页实现](#pagination)来查看`<trim>`标签和`<if>`标签是怎么进行运作的。
+
+#### 自定义请求返回体
+
+由于前端向后端发起请求，后端必须使用SpringBoot-web，所以后端制定一个统一的自定义返回体便于管理和扩展，同时也利于前端统一处理。本项目自定义得请求返回体包含**自定义状态码**`code`、**自定义消息体**`message`、**自定义数据对象**`data`、**自定义时间戳**`timestamp`
+
+`src/response/ResultResponse.java`：
+
+```java
+@Data
+@AllArgsConstructor
+@Accessors(chain = true)
+public class ResultResponse implements Serializable {
+    /**
+     * 序列化
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 自定义响应状态码
+     */
+    private Integer code;
+
+    /**
+     * 响应的消息
+     */
+    private String message;
+
+    /**
+     * 响应的具体数据对象
+     */
+    private Object data;
+
+    /**
+     * 响应的时间戳
+     */
+    private Long timestamp;
+
+    public ResultResponse() {
+        //status默认为2000
+        this.code = 20000;
+        //data默认为null
+        this.data = null;
+        //timestamp
+        this.timestamp = System.currentTimeMillis();
+    }
+
+}
+```
+
+##### 使用
+
+返回的时候直接返回一个ResultResponse对象就可以了，然后使用链式编程的方法`setMessage()`、`setData()`和`setCode()`就可以了。
+
+```java
+@RestController
+@RequestMapping("/user")
+@CrossOrigin("*")
+public class UserController {
+    @Autowired
+    private UserService userService;
+    
+    @GetMapping("/selectUserById")
+    public ResultResponse selectUserById(@RequestParam("id")Integer id){
+        User dbUser = userService.selectUserById(id);
+        return new ResultResponse()
+                .setMessage("根据编号查询用户")
+                .setData(new VoUser(dbUser));
+    }
+}
+```
+
+那么在前端，你就会接收到类似这样的json
+
+```json
+{
+    "data": {
+        
+    },
+    "code": 20000,
+    "message": "根据编号查询用户",
+    "timestamp": 151543131335
+}
+```
+
+不出意外的，每个请求正常返回都是这样，看起来是不是很整齐，并且使得前端更好处理，只需要处理自定义状态码就可以了。
+
+#### 公共工具类
+
+因为所有后端项目几乎都会使用到基于JWT的token，所以本项目将JWT的生成和解码以及验证放置到公共组件。
+
+`src/utils/JWTUtils.java`
+
+```java
+public class JWTUtils {
+
+    /*
+    *   secret密钥
+    * */
+    private static final String SECRET = "XXXXXX";
+
+    /**
+     *  生成JWT对象（重载，可以指定有效期（单位天））
+     * @param payloadMap    有效负载集合
+     * @param validityDay   有效时间
+     * @return token    JWT令牌
+     */
+    public static String createToken(Map<String,String> payloadMap,Integer validityDay){
+        if (validityDay == null){
+            validityDay = 7; //如果用户没有自定义有效期，则指定有效期为7
+        }
+        //1、创建JWT的builder构造器
+        JWTCreator.Builder jwtBuilder = JWT.create();
+        //2、遍历payloadMap然后利用withClaim添加到JWT中
+        payloadMap.forEach((key,value)->{ //lambda表达式遍历map
+            jwtBuilder.withClaim(key,value);
+        });
+        Calendar instance = Calendar.getInstance();
+        instance.add(Calendar.DATE,validityDay);//单位天
+        String token = jwtBuilder
+                .withExpiresAt(instance.getTime())  //3、添加JWT失效时间
+                .sign(Algorithm.HMAC256(SECRET));   //4、利用算法结合SECRET给JWT签名
+        return token;
+    }
+
+    /**
+     *  获取成功解密后的token对象（然后获取其中的payload）
+     * @param token JWT令牌
+     * @return decodedJWT   解密后的JWT对象
+     */
+    public static DecodedJWT getTokenInfo(String token){
+        try {
+            //1、结合算法生成准备验证token的验证器
+            JWTVerifier verifier = JWT.require(Algorithm.HMAC256(SECRET)).build();
+            //2、解密JWT对象
+            DecodedJWT decodedJWT = verifier.verify(token);
+            return decodedJWT;
+        } catch (SignatureVerificationException e) { //签名不一致
+            throw new RuntimeException("签名不一致");
+        } catch (TokenExpiredException e) {  //token已过期
+            throw new RuntimeException("token已过期");
+        } catch (AlgorithmMismatchException e) { //算法不匹配
+            throw new RuntimeException("算法不匹配");
+        } catch (InvalidClaimException e) { // payload已失效
+            throw new RuntimeException("payload已失效");
+        }
+    }
+
+}
+```
+
+##### 使用
+
+在任何地方使用`JWTUtils.creatToken()`来创建token
+
+```java
+String token = JWTUtils.createToken(payloadMap, voUserLogin.getValidityDay()); //利用payload和有效期生成token
+```
+
+同样的，使用`JWTUtils.getTokenInfo()`来验证token，并且解析
+
+```java
+String role = JWTUtils.getTokenInfo(token).getClaim("name").asString();//经过JWT取出role
+```
+
+根据`key=name`来取value，同样的存入的时候也需要`key,value`的方式存入。
+
+#### 公共视图对象
+
+同样的，因为绝大多数数据实体都需要用到分页查询，然后用到分页查询就离不开返回对象数组以及分页的相关参数。所以我选择将分页需要用到的视图对象放置到公共组件当中，然后塞入自定义请求返回体的data中，就能很好的与前端实现分页功能了。
+
+`src/vo/List.java`
+
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class VoList<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private Integer currentPage;
+
+    private Integer pageSize;
+
+    private Long totalSize;
+
+    private List<T> items;
+
+}
+```
+
+利用到了Java的泛型。
+
+##### 使用
+
+根据传入的currentPage和pageSize进行查询，返回集合对象，然后将该集合对象利用泛型创建的voList的`setItems()`方法塞进去，同样的，利用`setCurrentPage()`和`setPageSize()`和`setTotalSize()`都塞进去。最后将该voList对象作为自定义请求返回体的data返回。
+
+```java
+@RestController
+@RequestMapping("/user")
+@CrossOrigin("*")
+public class UserController {
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/selectList")
+    public ResultResponse selectList(@RequestParam(required = false)Integer currentPage,
+                                     @RequestParam(required = false)Integer pageSize){
+        List<VoUser> voUserList = userService.selectUserList(currentPage, pageSize);
+        User user = new User();
+        Long totalSize = userService.selectTotalSize(user);
+        VoList<VoUser> voList = new VoList<>();
+        voList.setCurrentPage(currentPage);
+        voList.setPageSize(pageSize);
+        voList.setTotalSize(totalSize);
+        voList.setItems(voUserList);
+        return new ResultResponse()
+                .setMessage("查询用户列表")
+                .setData(voList);
+    }
+
+}
+```
+
+### 数据库设计
+
+### POJO
+
+### Dao
+
+### Service
+
+### Vo
+
+### 条件查询
+
+### 分页实现
 
 因为基本上的所有数据库实体都可能需要使用到分页功能，所以考虑到代码复用性和可维护性，我便定义了公共的POJO（[后端的公共组件](#public)），需要用到分页功能的实体对象只需要继承他就可以了。
+
+#### BasePojo
 
 BasePojo.java：
 
@@ -975,6 +1591,8 @@ public class BasePojo implements Serializable {
 
 }
 ```
+
+#### Pojo
 
 User.java：
 
@@ -1000,6 +1618,8 @@ public class User extends BasePojo {
 
 MyBatis预处理语句：
 
+#### Mapper
+
 UserMapper.java:
 
 ```java
@@ -1024,8 +1644,6 @@ public interface UserMapper {
 }
 
 ```
-
-
 
 UserMapper.xml：
 
@@ -1074,35 +1692,34 @@ UserMapper.xml：
 先利用`<sql>`标签定义好了分页的语句，需要注意的是，MySQL的分页语句是`LIMIT offset,rows`从哪条记录开始，多少条记录，由于我为了方便理解，我就利用`<bind>`标签将offset和rows将我传入的pageSize和currentPage进行换算，就能得到offset和rows：
 
 ```
-offset = pageSize * (currentPage - 1)  		#偏移起始下标=每页记录数x（当前页-1）
-rows = pageSize
+offset = pageSize * (currentPage - 1)  		#起始下标=每页记录数x（当前页-1）
+rows = pageSize								#记录数
 ```
 
 
 
-## 前端手册
+#### Service
 
-TODO
+在Service中传入分页的条件就可以了
 
-### 网络请求
+```java
+@Service
+public interface UserService {
 
-## 后端手册
+    List<VoUser> selectUserListCondition(Integer roleId,
+                                         Integer currentPage,
+                                         Integer pageSize);
 
-TODO
+    /**
+     * 查询记录数
+     * @param user
+     * @return              记录数
+     */
+    Long selectTotalSize(User user);
+}
+```
 
-### 项目结构
 
-### <span id='public'>公共组件</span>
-
-### 数据库设计
-
-### 数据实体（POJO）
-
-### 数据持久层（Dao）
-
-### 业务层（Service）
-
-### 视图对象（Vo）
 
 ## 缺陷（待更新）
 
