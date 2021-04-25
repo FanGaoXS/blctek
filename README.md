@@ -51,25 +51,25 @@
 npm -v # >=6.14.8
 ```
 
-#### 1、移动到xxx-web下
+1、移动到xxx-web下
 
 ```bash
 cd xxx-web
 ```
 
-#### 2、安装依赖包
+2、安装依赖包
 
 ```bash
 npm i  # npm install
 ```
 
-#### 3、运行开发模式
+3、运行开发模式
 
 ```bash
 npm run dev
 ```
 
-#### 4、运行生产模式
+4、运行生产模式
 
 ```bash
 npm run build:prod
@@ -142,7 +142,7 @@ application-dev.yaml			#开发环境配置文件
 application-prod.yaml			#生产环境配置文件
 ```
 
-#### application.yaml：
+application.yaml：
 
 ```yaml
 #当前启用哪个配置文件
@@ -170,7 +170,7 @@ mybatis:
 
 这里配置了全局配置文件，同时在spring.profiles.active里根据名字启用对应的配置文件
 
-#### application-dev.yaml：
+application-dev.yaml：
 
 ```yaml
 #当前配置文件名称
@@ -187,7 +187,7 @@ spring:
 
 ```
 
-#### application.prod.yaml：
+application.prod.yaml：
 
 ```yaml
 spring:
@@ -247,7 +247,7 @@ spring:
 
 ### 后端
 
-#### JWT
+JWT
 
 关于JWT可以参看：[JWT认证原理，并整合SpringBoot](https://blog.csdn.net/weixin_45747080/article/details/111684442)
 
@@ -299,7 +299,7 @@ PathPatterns是配置哪些来自浏览器的请求需要被拦截，ExcludePath
 
 主要采用cookies和vuex和vue-router结合使用的方式来达到存储用户token，验证用户token，限制用户访问和操作
 
-#### cookies
+cookies
 
 `@/utils/auth.js`（token在cookies中的存取）：
 
@@ -325,7 +325,7 @@ export function removeToken() {
 
 ```
 
-#### vuex
+vuex
 
 `@/store/modules/user.js`（将token赋值给vuex）
 
@@ -396,11 +396,11 @@ export default {
 
 无论哪种方式都是可行的，你只需要注意的就是vuex的全局变量是存储在内存中的，刷新就没有了，你需要在客户端持久化。在用户登录的时候就将用户个人信息，如id、roles赋值给vuex和本地存储，并且将token存入cookies。用户退出时必须要先清空cookies中的token和客户端本地的个人信息，最后再将state利用`getDefaultState()`还原。因为`getDefaultState()`里是取的cookies和本地存储的个人信息，每次在用户进入在项目的时候都会赋值（直接从cookies和本地取值），如果你没有先清空cookies和本地存储就进行还原state，那么这次用户即使退出，但是vuex里存储的仍然有cookies中的token和本地存储的个人信息。具体可以参看vue-admin-template的store中user用户信息的设计[@/store/mudules/user.js](https://github.com/PanJiaChen/vue-admin-template/blob/master/src/store/modules/user.js)，写得特别好。
 
-#### vue-router
+vue-router
 
 另外还通过路由来控制用户哪些页面能访问哪些页面不能访问：在访问路由前通过路由守卫获得要访问的页面的权限（哪些角色能够访问），再通过vuex中存储的用户的角色进行比对，如果匹配则允许访问，否则不允许访问。关于如果利用vue-router来控制用户能够访问的页面，vue-element-admin的作者PanJiaChen的这篇文章讲得特别好 [手摸手，带你用 vue 撸后台 系列二(登录权限篇)](https://juejin.im/post/591aa14f570c35006961acac)。
 
-#### v-permission
+v-permission
 
 通过你还可以通过指令来达到按钮级别的权限控制：控制该操作该用户是否能够执行，具体可以参看：[vue-admin-element的权限验证](https://panjiachen.gitee.io/vue-element-admin-site/zh/guide/essentials/permission.html)
 
@@ -508,7 +508,7 @@ let routes=[
 
 GPS定位通常返回的是当前瞬时时间下当前位置的经度、纬度、高度、海拔等信息。两点就会连成一条直线，n点依次连接就会形成折线，然后再绘制出起点和终点。
 
-#### GPS坐标点数据
+GPS坐标点原数据
 
 ```json
 {
@@ -588,13 +588,13 @@ GPS定位仪器放置在车辆上，设置一定时间间隔获取来自GPS的�
 
 ### 效果图
 
-#### 展示
+展示
 
 ![image-20210422181951580](img/image-20210422181951580.png)
 
 直接通过http请求获得工程用具对象数组，然后遍历数组，得到对应的信息，其中图片需要注意的是：直接利用该工程用具uuid然后访问到静态资源服务上的该图片就能访问了。
 
-#### 修改
+修改
 
 ![image-20210422182451364](img/image-20210422182451364.png)
 
@@ -604,15 +604,15 @@ GPS定位仪器放置在车辆上，设置一定时间间隔获取来自GPS的�
 
 ### 效果图
 
-#### 展示
+展示
 
 ![image-20210422182925465](img/image-20210422182925465.png)
 
-#### 新增
+新增
 
 ![image-20210422183016757](img/image-20210422183016757.png)
 
-#### 修改
+修改
 
 ![image-20210422183032592](img/image-20210422183032592.png)
 
@@ -626,17 +626,15 @@ GPS定位仪器放置在车辆上，设置一定时间间隔获取来自GPS的�
 
 角色类似于用户组的概念，就是某个角色能够访问哪些页面，某个角色能够进行哪些操作。目前角色只细分到了用户能够进行具体哪一个操作上（比如：增删改用户），同时还能够新增角色（v1.6）。目前暂不支持新增角色后然后给角色指定哪些页面能够访问哪些操作能够进行。
 
-#### 效果图
-
-##### 展示
+展示
 
 ![image-20210422202723968](img/image-20210422202723968.png)
 
-##### 修改
+修改
 
 ![image-20210422202738878](img/image-20210422202738878.png)
 
-##### 新增
+新增
 
 ![image-20210422202833620](img/image-20210422202833620.png)
 
@@ -644,23 +642,21 @@ GPS定位仪器放置在车辆上，设置一定时间间隔获取来自GPS的�
 
 用户就是能够登录系统的最小单元。通过指定给用户分配角色来指定用户能够访问什么页面，进行什么操作。同时在前面的<a href="#auth">权限验证</a>有讲过我是怎样做到前后端互相联调实现权限验证的。
 
-#### 效果图
-
-##### 展示
+展示
 
 ![image-20210422202804804](img/image-20210422202804804.png)
 
-##### 条件查询
+条件查询
 
 同时还可以按角色直接快速查询用户
 
 ![image-20210422203010083](img/image-20210422203010083.png)
 
-##### 修改
+修改
 
 ![image-20210422202856227](img/image-20210422202856227.png)
 
-##### 新增
+新增
 
 ![image-20210422202912609](img/image-20210422202912609.png)
 
@@ -668,13 +664,11 @@ GPS定位仪器放置在车辆上，设置一定时间间隔获取来自GPS的�
 
 由SpringBoot-AOP实现，细分到controller上的方法，获得该方法的切面（只为增删改定义了切点），同时采用注解的方式给方法定义切点：方法上有注解的才会执行aop。同时在该切面的正常返回通知里来判断该方法是否执行成功、执行者、执行的客户端来源、执行者的IP地址、执行该操作的时间等。关于SpringBoot-AOP的切点、切面以及返回通知的解释请参看：
 
-### 效果图
-
-#### 展示
+展示
 
 ![image-20210422203949714](img/image-20210422203949714.png)
 
-#### 条件查询
+条件查询
 
 同时能够利用执行者或者来源客户端进行快速查询日志
 
@@ -705,7 +699,7 @@ public @interface CrudLog {
 
 关于SpringBoot的AOP可以参看：[一张图搞懂SpringBoot AOP的5个通知的交织顺序](https://blog.csdn.net/weixin_45747080/article/details/114421918)，[Spring的AOP面向切面编程](https://blog.csdn.net/weixin_45747080/article/details/106364788)
 
-#### 使用方法
+**使用方法**
 
 在需要进行日志AOP的直接加上注解：`@CrudLog`
 
@@ -723,7 +717,7 @@ public ResultResponse insertUser(@RequestBody VoUser voUser){
 
 加上了该注解的方法就能够直接作为切面，从而转交给AOP。
 
-#### 具体逻辑
+**具体逻辑**
 
 1、定义切点为`@CrudLog`注解：加上该注解的就是切面
 
@@ -812,31 +806,31 @@ public class CrudAspect {
 
 纯前后端分离的，利用Ajax的网络测速小组件。关于该组件的完整前后端可以参看：[speed-test测速组件（基于Vue、elementUI、Springboot）](https://github.com/FanGaoXS/speed-test)
 
-#### 测速原理
+**测速原理**
 
-##### 下载
+**下载**
 
 1. 访问位于服务端的静态资源（切记该资源不能太大，因为网速限制，如果太大会造成该次请求超时）
 2. 发起访问的时候获得此时的时间戳作为开始时间
 3. 请求资源结束的时候获得此时的时间戳作为结束时间
 4. 利用该静态资源的大小除以时间差，即可算出单位时间的资源下载量，即可算出下载的网速。
 
-##### 上传
+**上传**
 
 1. 利用POST向服务端发起一个请求（POST可以发送大请求，请求不需要太大，也不能太小，因为网速限制）
 2. 发起请求的时候记录下该时的时间戳作为开始时间
 3. 请求从服务端返回的时间作为结束时间
 4. 利用该上传请求的大小除以时间差，即可算出单位时间的资源上传量，即可算出上传的网速。
 
-#### 代码实现
+**代码实现**
 
-##### 下载
+**下载**
 
-###### 后端
+后端
 
 直接将静态资源利用放置上面所提到的<a href='#resources'>静态资源</a>服务器上即可
 
-###### 前端
+前端
 
 ```js
 download(){
@@ -867,9 +861,9 @@ download(){
 },
 ```
 
-##### 上传
+**上传**
 
-###### 后端
+ 后端
 
 ```java
 @RestController
@@ -892,7 +886,7 @@ public class SpeedController {
 }
 ```
 
-###### 前端
+ 前端
 
 ```js
 upload(){
@@ -933,11 +927,9 @@ upload(){
 >
 > 上传和下载的资源大小单位是Byte字节，以网速换算单位就是需要乘8然后除以单位时间：
 >
-> 
 > bps  		#字节/每秒
 > Kbps		#K/每秒 		Kbps = bps/1024
 > Mbps		#兆/每秒	   Mbps = Kbps/1024
-> 
 
 
 
@@ -1004,7 +996,7 @@ upload(){
 
 对axios的封装位于`@/utils/request.js`，具体的网络请求位于`@/api/xxx.js`，建议api下最后按照model来分。
 
-#### 全局配置
+**全局配置**
 
 主要配置axios的全局参数，如baseURL和timeout等
 
@@ -1016,7 +1008,7 @@ const axiosInstance = axios.create({
 })
 ```
 
-#### request拦截器
+**request拦截器**
 
 request拦截器就是在每一个http请求发出的时候都会对config进行操作，如：在config的headers中添加自定义的客户端标识X-Client以及携带自定义的X-Token
 
@@ -1041,7 +1033,7 @@ axiosInstance.interceptors.request.use(
 )
 ```
 
-#### response拦截器
+**response拦截器**
 
 由于axios对于http请求再加了一层，所以其实我们从后端接收到的真正数据应该是`response.data`，response拦截器可以在数据返回的时候判断数据中的状态码（自定义异常），然后对自定义异常进行一些相应的判断并且利用element-ui的message进行弹窗提示。
 
@@ -1088,7 +1080,7 @@ axiosInstance.interceptors.response.use(
 )
 ```
 
-#### 请求
+**请求**
 
 `@/utils/user.js`
 
@@ -1108,7 +1100,7 @@ export function getUser(id) {
 
 直接传入对应的url、method和params就可以了。
 
-#### 使用
+**使用**
 
 先利用import导入该请求，然后直接利用Promise就可以使用了。
 
@@ -1141,7 +1133,7 @@ export function getUser(id) {
 
 ```
 
-### 全局状态管理
+**全局状态管理**
 
 主要是利用Vue.js的一个核心组件vuex实现，存储一些凌驾于页面之上的，存在于整个应用的变量或者方法，比如：用户的编号、用户的姓名、用户的token、用户的一些偏好设置等。关于vuex请参看：[Vue.js之vuex](https://blog.csdn.net/weixin_45747080/article/details/109817118#t74)
 
@@ -1240,7 +1232,7 @@ export function getUser(id) {
             └─mapper
 ```
 
-#### 其他项目引入
+**其他项目引入**
 
 需要将公共组件的构建方式改为利用maven打包成依赖，并且生成不可执行的jar包，需要在`pom.xml`中将构建方式改为：
 
@@ -1285,15 +1277,15 @@ export function getUser(id) {
 >
 > 每次修改了公共组件（common-server）切记都需要利用maven打包成依赖，然后再在其他项目中引入。强烈建议修改了公共组件后修改pom文件里的版本号再打包，然后在引入的时候也修改为打包后的版本！！！
 
-#### 日志
+**日志**
 
 由于大多数后端项目中都需要对日志表进行增删改查，所以我就选择将日志实体类和日志DAO放置到公共组件当中。
 
-#### BasePojo
+**BasePojo**
 
 上文的[分页实现](#pagination)中讲过，基本上所有的数据库实体都可能用到分页查询，所以将实现分页的基础pojo放置到公共组件的BasePojo中。由于Pojo继承了BasePojo，那么就可以直接使用set或者get来设置或者得到currentPage和pageSize，从而与该Pojo对象一起传入进Mapper中，然后进行符合条件的分页查询。（所以该BasePojo基本只在查询的时候使用）
 
-##### 使用方法
+**使用方法**
 
 ```java
 @SpringBootTest
@@ -1330,7 +1322,7 @@ public class UserMapperTest {
 
 如果你没有传入currentPage和pageSize，没关系，得益于MyBatis的特性：`<trim>`标签结合`<if>`标签的使用，如果没有传入currentPage和pageSize，那么该`<trim>`标签就意味着不会生效，也就是不会进行分页查询， 而是查询全表，但是我建议你不要这么做！！！可以参看[分页实现](#pagination)来查看`<trim>`标签和`<if>`标签是怎么进行运作的。
 
-#### 自定义请求返回体
+**自定义请求返回体**
 
 由于前端向后端发起请求，后端必须使用SpringBoot-web，所以后端制定一个统一的自定义返回体便于管理和扩展，同时也利于前端统一处理。本项目自定义得请求返回体包含**自定义状态码**`code`、**自定义消息体**`message`、**自定义数据对象**`data`、**自定义时间戳**`timestamp`
 
@@ -1378,7 +1370,7 @@ public class ResultResponse implements Serializable {
 }
 ```
 
-##### 使用
+**使用**
 
 返回的时候直接返回一个ResultResponse对象就可以了，然后使用链式编程的方法`setMessage()`、`setData()`和`setCode()`就可以了。
 
@@ -1415,7 +1407,7 @@ public class UserController {
 
 不出意外的，每个请求正常返回都是这样，看起来是不是很整齐，并且使得前端更好处理，只需要处理自定义状态码就可以了。
 
-#### 公共工具类
+**公共工具类**
 
 因为所有后端项目几乎都会使用到基于JWT的token，所以本项目将JWT的生成和解码以及验证放置到公共组件。
 
@@ -1479,7 +1471,7 @@ public class JWTUtils {
 }
 ```
 
-##### 使用
+**使用**
 
 在任何地方使用`JWTUtils.creatToken()`来创建token
 
@@ -1495,7 +1487,7 @@ String role = JWTUtils.getTokenInfo(token).getClaim("name").asString();//经过J
 
 根据`key=name`来取value，同样的存入的时候也需要`key,value`的方式存入。
 
-#### 公共视图对象
+**公共视图对象**
 
 同样的，因为绝大多数数据实体都需要用到分页查询，然后用到分页查询就离不开返回对象数组以及分页的相关参数。所以我选择将分页需要用到的视图对象放置到公共组件当中，然后塞入自定义请求返回体的data中，就能很好的与前端实现分页功能了。
 
@@ -1522,7 +1514,7 @@ public class VoList<T> implements Serializable {
 
 利用到了Java的泛型。
 
-##### 使用
+**使用**
 
 根据传入的currentPage和pageSize进行查询，返回集合对象，然后将该集合对象利用泛型创建的voList的`setItems()`方法塞进去，同样的，利用`setCurrentPage()`和`setPageSize()`和`setTotalSize()`都塞进去。最后将该voList对象作为自定义请求返回体的data返回。
 
@@ -1569,32 +1561,7 @@ public class UserController {
 
 因为基本上的所有数据库实体都可能需要使用到分页功能，所以考虑到代码复用性和可维护性，我便定义了公共的POJO（[后端的公共组件](#public)），需要用到分页功能的实体对象只需要继承他就可以了。
 
-#### BasePojo
-
-BasePojo.java：
-
-```java
-@AllArgsConstructor
-@NoArgsConstructor
-@Data
-public class BasePojo implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 当前页（分页查询）
-     */
-    private Integer currentPage;
-
-    /**
-     * 每页记录数（分页查询）
-     */
-    private Integer pageSize;
-
-}
-```
-
-#### Pojo
+**Pojo**
 
 User.java：
 
@@ -1620,7 +1587,7 @@ public class User extends BasePojo {
 
 MyBatis预处理语句：
 
-#### Mapper
+**Mapper**
 
 UserMapper.java:
 
@@ -1700,7 +1667,7 @@ rows = pageSize								#记录数
 
 
 
-#### Service
+**Service**
 
 在Service中传入分页的条件就可以了
 
