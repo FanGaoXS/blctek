@@ -420,13 +420,17 @@ v-permission
 - 为什么要用md5算法？因为md5是不可逆的。
 - 为什么要使用随机salt？避免撞库。
 
+关于该项目前端如何实现密码加密请参看：[前端手册之密码加密](#front-end-secret)
+
+关于该项目后端如何实现密码加密请参看：[后端手册之密码加密](#back-end-secret)
+
 ## <span id='resource'>静态资源</span>
 
 利用SpringBoot-web启动了一个只存放静态资源的服务。
 
 ### 文件上传
 
-比如我需要上传图片或者文件，只需要利用MultipartFile类接收文件，然后存储到服务器本地就可以了。
+比如我需要上传图片或者文件，只需要利用MultipartFile类接收文件，然后存储到服务器本地就可以了。关于该项目的图片上传请参看：[前端手册之图片上传](#upload-image)
 
 ### 文件下载（访问）
 
@@ -941,11 +945,11 @@ upload(){
 
 ### 逻辑
 
-**后端**持久层在查询列表数据的时候就利用MyBatis定义好分页的SQL预处理语句，查询的时候如果传递再传递当前页和每页多少记录就可以了，为了避免两个都为空而查询所有表耗费大量查询资源，所以默认情况是当前页为1，每页记录数为10。同时利用SQL语句查询总记录数，就能很好地协调前端根据当前页、每页记录数、总记录数获得总共有多少页。
+**后端**持久层在查询列表数据的时候就利用MyBatis定义好分页的SQL预处理语句，查询的时候如果传递再传递当前页和每页多少记录就可以了，为了避免两个都为空而查询所有表耗费大量查询资源，所以默认情况是当前页为1，每页记录数为10。同时利用SQL语句查询总记录数，就能很好地协调前端根据当前页、每页记录数、总记录数获得总共有多少页。[后端手册之分页实现](#back-end-pagination)
 
 **前端**得益于Vue.js的动态绑定的特性，所以每次修改**当前页**和**记录数**就可以重新发起请求然后再次填充页面数据。
 
-前端访问后端的时候只需要得到**当前页、每页记录数、总记录数**就可以了。
+前端访问后端的时候只需要得到**当前页、每页记录数、总记录数**就可以了。[前端手册之分页实现](#front-end-pagination)
 
 ## 前端手册
 
@@ -1168,7 +1172,62 @@ export function getUser(id) {
     validate.js					#相关内容的验证
 ```
 
-### 分页实现
+### <span id='front-end-secret'>密码加密</span>
+
+和后端一致的密码混淆规则：
+
+`@/utils/password.js`
+
+```js
+import Md5 from 'js-md5'
+
+//正常密码+规则+盐，混淆
+export function md5Password(password,randomSalt) {
+  return Md5(password + 'dsxssx' + randomSalt)
+}
+```
+
+根据用户名获得密码盐的网络请求：
+
+`@/api/profile.js`
+
+```js
+export function getSalt(username) {
+  return request({
+    url: '/salt',
+    method: 'GET',
+    params: {
+      username
+    }
+  })
+}
+```
+
+在用户登录或者修改密码的时候先根据用户名获得盐，再混淆然后将用户名和密码传递给后端进行比对用户名和密码是否正确：
+
+`@/api/user/auth.js`
+
+```js
+export async function login(user) {
+  const { data } = await getSalt(user.username.trim()) //根据用户名获得该用户的密码盐
+  const salt = data.salt
+  return request({
+    url: '/login',
+    method: 'POST',
+    data:{
+      username: user.username,
+      password: md5Password(user.password,salt), //将密码和盐混淆加密
+      validityDay: user.validityDay
+    }
+  })
+}
+```
+
+> **切记**
+>
+> 一定要用==同步==方法先获得密码盐，然后根据MD5混淆规则混淆密码，利用POST传递给后端
+
+### <span id='front-end-pagination'>分页实现</span>
 
 得益于Vue.js的动态绑定以及双向绑定的特性，该项目前端分页使用element-ui的`<el-pagination>`组件，具体可以参看：[element-ui的分页组件](https://element.eleme.cn/#/zh-CN/component/pagination)
 
@@ -1235,7 +1294,7 @@ async fetchList() {
 </el-pagination>
 ```
 
-### 图片上传
+### <span id='upload-image'>图片上传</span>
 
 图片上传使用的是element-ui的上传组件，具体可以参看：[element-ui的上传组件](https://element.eleme.cn/#/zh-CN/component/upload)
 
@@ -1938,9 +1997,9 @@ public class UserServiceImpl implements UserService {
 
 ![image-20210426180756228](img/image-20210426180756228.png)
 
-### 密码加密
+### <span id='back-end-secret'>密码加密</span>
 
-需要使用到MD5的工具类`src/utils/Md5Utils.java`，其中有两个方法：1、获得随机盐。2、将规则和原密码和盐利用MD5进行混淆。
+需要使用到MD5的工具类`src/utils/Md5Utils.java`，其中有两个方法：1、生成随机盐。2、将规则和原密码和盐利用MD5进行混淆。
 
 ```java
 public class Md5Utils {
@@ -1967,7 +2026,7 @@ public class Md5Utils {
 }
 ```
 
-在新增用户的时候就进行先生成一个随机盐，然后利用随机盐混淆密码后再进入插入操作：`src/service/UserService.java`
+在新增用户的时候就进行先生成一个随机盐，然后利用随机盐混淆密码后再直接将混淆后的密码进行插入：`src/service/UserService.java`
 
 ```java
 @Service
@@ -2036,7 +2095,7 @@ catch (Exception e){
 }
 ```
 
-### 分页实现
+### <span id='back-end-pagination'>分页实现</span>
 
 因为基本上的所有数据库实体都可能需要使用到分页功能，所以考虑到代码复用性和可维护性，我便定义了公共的POJO（[后端的公共组件](#public)），需要用到分页功能的实体对象只需要继承他就可以了。
 
