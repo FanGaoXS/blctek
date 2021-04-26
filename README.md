@@ -6,6 +6,8 @@
 
 ### 解决问题
 
+在过去，传统路桥施工行业的工程用具管理问题一直是个大难题。对于管理方面来说， 属于工程用具的工程车辆管理是比较难的一个问题，会涉及到工程车辆的申报、工程车辆 的检修、工程车辆的维护、工程车辆的归属、工程车辆的基本信息以及工程车辆的每日使 用情况等问题。对于监理来说，工程车辆的每日使用情况跟踪也是一个问题。 传统的解决工程车辆管理的方法就是采用纸质档记录车辆信息并归档，虽然这样比较 方便并且数据有更久的保存性，但是对于大型项目来说，纸质档文件的传递性就会比较低 下，并且使用大量的纸张不环保，造成资源的浪费。但这些问题都不是核心问题，我认为 对于传统项目来说，纸质档记录车辆信息存在最大的问题就是可欺骗性和篡改性，由其体 现在工程车辆的每日使用情况的监理上。 传统的解决工程车辆的每日使用情况的监理则是采用请监理公司的人员对工程车辆 进行监理，从而达到实现对工程车辆的使用情况认定的问题。但是这样可能会有一个问题 就是有的司机可能会偷懒，并且向监理人员多报自己的工作量等，还有可能监理人员与司 机串通，这样就没有很好的达到管理的目的。 一般在工程上的工程车辆会涉及到几个方面需要进行监理：车辆的油耗、车辆的每日 使用情况、车辆的行驶路径等核心。所以如何高效且准确地记录他们并且结合计算机地方 式对它们进行监理，是我想要解决的关键性问题。
+
 ### 在线演示
 
 1、项目地址：https://car2.blctek.com:8443/
@@ -418,7 +420,7 @@ v-permission
 - 为什么要用md5算法？因为md5是不可逆的。
 - 为什么要使用随机salt？避免撞库。
 
-## <span id='resources'>静态资源</span>
+## <span id='resource'>静态资源</span>
 
 利用SpringBoot-web启动了一个只存放静态资源的服务。
 
@@ -660,7 +662,7 @@ GPS定位仪器放置在车辆上，设置一定时间间隔获取来自GPS的�
 
 ![image-20210422202912609](img/image-20210422202912609.png)
 
-## 日志管理
+## <span id='logger'>日志管理</span>
 
 由SpringBoot-AOP实现，细分到controller上的方法，获得该方法的切面（只为增删改定义了切点），同时采用注解的方式给方法定义切点：方法上有注解的才会执行aop。同时在该切面的正常返回通知里来判断该方法是否执行成功、执行者、执行的客户端来源、执行者的IP地址、执行该操作的时间等。关于SpringBoot-AOP的切点、切面以及返回通知的解释请参看：
 
@@ -1166,7 +1168,96 @@ export function getUser(id) {
     validate.js					#相关内容的验证
 ```
 
+### 分页实现
 
+得益于Vue.js的动态绑定以及双向绑定的特性，该项目前端分页使用element-ui的`<el-pagination>`组件，具体可以参看：[element-ui的分页组件](https://element.eleme.cn/#/zh-CN/component/pagination)
+
+我的处理思路是：后端做好根据每页记录数、当前页以及条件查询的接口，像这样：
+
+```json
+url: 'user-server/user/selectList',
+method: 'GET',
+params: {
+    roleId,
+    currentPage,
+    pageSize
+}
+```
+
+表明`url请求地址`、`method请求方式`、`params请求参数（其中需要包含当前页、每页记录数）`，后端就会返回这样的数据结构：
+
+```json
+{
+    "code": 20000,
+    "message": "查询用户",
+    "timestamp": 1541512312312,
+    "data": {
+        "currentPage": 1,
+        "pageSize": 10,
+        "totalSize": 20,
+        "items": [
+            {
+                "id": 1,
+                "name": "测试1"
+            },
+            {
+               "id": 2,
+                "name": "测试2"
+            },
+            ...
+        ]
+    }
+}
+```
+
+在向后端发起请求后直接赋值`currentPage`、`pageSize`、`totalSize`到页面数据上就可以了
+
+```js
+//拉取表格数据
+async fetchList() {
+    const { data:userList } = await getUserList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize)
+    this.list = userList.items
+    this.listQuery.currentPage = userList.currentPage
+    this.listQuery.pageSize = userList.pageSize
+    this.listQuery.totalSize = userList.totalSize
+},
+```
+
+同时在页面的分页组件就直接绑定`currentPage`、`pageSize`、`totalSize`就能得到非常好的分页体验了：
+
+```vue
+<el-pagination
+        :total="listQuery.totalSize"
+        :page-size="listQuery.pageSize"
+        :current-page.sync="listQuery.currentPage"
+        @current-change="handleListQueryChange"
+        layout="total, prev, pager, next, jumper">
+</el-pagination>
+```
+
+### 图片上传
+
+图片上传使用的是element-ui的上传组件，具体可以参看：[element-ui的上传组件](https://element.eleme.cn/#/zh-CN/component/upload)
+
+```vue
+<el-upload
+           ref="upload"
+           action="/upload"
+           show-file-list
+           list-type="picture"
+           name="image"
+           :limit="1"
+           :accept="'image/png, image/jpeg'"
+           :before-upload="beforeUpload"
+           :on-success="successUpload"
+           :on-error="errorUpload"
+           >
+    <el-button size="medium" type="primary">上传<i class="el-icon-upload el-icon--right"></i></el-button>
+</el-upload>
+resource
+```
+
+直接使用`el-upload`组件中的action属性指定上传地址,上传到后端的[静态资源服务器](#resource)，或者各大图床。其中name是后端接收该文件的键名），最后处理上传各个阶段的回调函数就可以了。
 
 ## 后端手册
 
@@ -1208,7 +1299,7 @@ export function getUser(id) {
 
 `aop`：基于spring-aop的实现，本项目主要用于处理日志。
 
-`interceptor`：Web的拦截器，主要处理请求，哪些允许过，哪些不允许过
+`interceptor`：Web的拦截器，主要处理请求，哪些请求允许通过，哪些请求不允许通过
 
 `config`：SpringBoot的配置，主要是手动启用SpringBoot的相关配置，该项目主要用于启用SpringMVC的Web拦截器。
 
@@ -1547,15 +1638,403 @@ public class UserController {
 
 ### 数据库设计
 
+**用户表（user）**
+
+存储用户的相关信息
+
+| 字段名   | 数据类型 | 是否主键 | 注释         |
+| -------- | -------- | -------- | ------------ |
+| id       | int      | 是       | 用户自增主键 |
+| uuid     | varchar  |          | 用户唯一标识 |
+| username | varchar  |          | 用户名       |
+| password | varchar  |          | 密码         |
+| name     | varchar  |          | 姓名         |
+| avatar   | varchar  |          | 头像地址     |
+| phone    | varchar  |          | 电话号码     |
+| roleId   | int      |          | 所属权限编号 |
+
+其中用户名不能重复，所以`username`有唯一性索引
+
+**密码盐（password_salt）**
+
+存储用户创建时生成的随机密码盐
+
+| 字段名   | 数据类型 | 是否主键 | 注释     |
+| -------- | -------- | -------- | -------- |
+| id       | int      | 是       | 用户编号 |
+| username | varchar  |          | 用户名   |
+| value    | int      |          | 随机盐   |
+
+**角色表（role）**
+
+存储该系统的角色（用户组）
+
+| 字段名      | 数据类型 | 是否主键 | 注释         |
+| ----------- | -------- | -------- | ------------ |
+| id          | int      | 是       | 角色自增主键 |
+| name        | varchar  |          | 角色名       |
+| chineseName | varchar  |          | 角色中文名   |
+| description | varchar  |          | 角色描述     |
+
+**日志表（logger）**
+
+存储操作的日志
+
+| 字段名   | 数据类型 | 是否主键 | 注释             |
+| -------- | -------- | -------- | ---------------- |
+| id       | int      | 是       | 日志自增主键     |
+| name     | varchar  |          | 操作名           |
+| time     | datetime |          | 操作发生的时间   |
+| executor | varchar  |          | 操作执行者       |
+| ip       | varchar  |          | 操作ip地址       |
+| client   | varchar  |          | 操作执行的客户端 |
+
+**工程用具表（engineer）**
+
+存储工程用具的相关信息
+
+| 字段名    | 数据类型 | 是否主键 | 注释                       |
+| --------- | -------- | -------- | -------------------------- |
+| id        | int      | 是       | 自增主键                   |
+| uuid      | varchar  |          | 随机唯一标识               |
+| type      | varchar  |          | 所属工程用具（机械or车辆） |
+| deviceId  | varchar  |          | 设备编号                   |
+| driverId  | int      |          | 所属驾驶员编号             |
+| inputTime | datetime |          | 录入时间                   |
+| modelId   | int      |          | 所属的类型编号             |
+
+**工程用具类型表（model）**
+
+存储工程用具类型的相关信息
+
+| 字段名      | 数据类型 | 是否主键 | 注释                           |
+| ----------- | -------- | -------- | ------------------------------ |
+| id          | int      | 是       | 自增主键                       |
+| uuid        | varchar  |          | 随机唯一标识                   |
+| type        | varchar  |          | 所属工程用具类型（车辆或机械） |
+| name        | varchar  |          | 类型名                         |
+| description | varchar  |          | 类型描述                       |
+
+**驾驶员表（driver）**
+
+存储驾驶员的相关信息
+
+| 字段名 | 数据类型 | 是否主键 | 注释           |
+| ------ | -------- | -------- | -------------- |
+| id     | int      | 是       | 自增主键       |
+| uuid   | varchar  |          | 随机唯一标识   |
+| name   | varchar  |          | 驾驶员姓名     |
+| phone  | varchar  |          | 驾驶员联系方式 |
+
 ### POJO
 
-### Dao
+是跟数据库一一对应的数据库实体，如用户表`src/pojo/user.java`
+
+```java
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class User extends BasePojo {
+    /**
+     * 用户自增主键
+     */
+    private Integer id;
+
+    /**
+     * 用户唯一标识
+     */
+    private String uuid;
+
+    /**
+     * 用户名
+     */
+    private String username;
+
+    /**
+     * 密码
+     */
+    private String password;
+
+    /**
+     * 姓名
+     */
+    private String name;
+
+    /**
+     * 头像地址
+     */
+    private String avatar;
+
+    /**
+     * 联系方式
+     */
+    private String phone;
+
+    /**
+     * 所属角色编号
+     */
+    private Integer roleId;
+
+    private Role role;
+
+}
+```
+
+至于为什么最后会加上`private Role role;`是根据MyBatis的联表查询的规范，请参看：[MyBatis实现多表之间联系](https://blog.csdn.net/weixin_45747080/article/details/105252194)
+
+### DAO
+
+数据访问层是使用的MyBatis，所以我们应该遵循MyBatis的设计规范。
+
+创建`XxxMapper.java`接口
+
+```java
+@Mapper
+@Repository
+public interface UserMapper {
+
+    /**
+     * 增加一条记录
+     * @param user 用户对象
+     * @return 增加成功的记录数
+     */
+    Integer insertOne(User user);
+
+    /**
+     * 删除一条记录
+     * @param user 用户对象
+     * @return 删除成功的记录数
+     */
+    Integer deleteOne(User user);
+
+    /**
+     * 修改用户
+     * @param user 用户对象
+     * @return 修改成功的记录数
+     */
+    Integer updateOne(User user);
+
+    /**
+     * 查询所有user集合（可分页，可多条件，可单条件）
+     * @param user 用户对象
+     * @return user集合
+     */
+    List<User> selectList(User user);
+
+    /**
+     * 查询一条user记录（可多条件，可单条件）
+     * @param user
+     * @return  一条用户对象
+     */
+    User selectOne(User user);
+
+    /**
+     * 查询记录数（可条件查询）
+     * @param user  用户对象
+     * @return  记录数
+     */
+    Long count(User user);
+
+}
+```
+
+记得加上`@Mapper`和`@Repository`注解，启用MyBatis和SpringBoot的注解。
+
+然后创建`XxxMapper.xml`文件，进行增删改查
+
+```xml
+<mapper namespace="UserMapper">
+    
+</mapper>
+```
 
 ### Service
 
+将DAO层增删改查出来的数据进行进一步处理和封装成我们期望的数据。
+
 ### Vo
 
-### 条件查询
+视图对象我认为是很有必要加上的，因为传统查询出来的数据使用Pojo对象接管后会出现一些不希望返回给前端的数据，比如：user表的password字段，就不需要返回给前端，不安全也没有必要。并且在添加了Vo层后，Pojo只要跟数据库字段一一对应后就不需要改动了，只需要创建新的Vo对象来匹配查询出来的Pojo对象就可以了，这样既增加了可复用性也增加了可维护性。
+
+关于Vo对象的设计，`src/vo/VoUser.java`
+
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class VoUser implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private Integer id;
+
+    private String uuid;
+
+    private String username;
+
+    private String name;
+
+    private String avatar;
+
+    private String phone;
+
+    private VoRole role;
+
+    public VoUser(User user) {
+        this.id = user.getId();
+        this.uuid = user.getUuid();
+        this.username = user.getUsername();
+        this.name = user.getName();
+        this.avatar = user.getAvatar();
+        this.phone = user.getPhone();
+        this.role = new VoRole(user.getRole());
+    }
+}
+```
+
+我只需要返回给前端需要的数据就可以了，其余的就可以直接不管，建议直接在Vo对象的构造函数中传入Pojo对象，然后再一一对应就可以了。
+
+**Service层中的List\<Vo对象\>**
+
+我在上面讲过，service层最好是处理数据，controller转发请求，所以我选择在该项目的service层中返回查询的VO对象集合。先是查询到POJO对象的集合，然后遍历该POJO集合，将遍历到的对象依次塞进VO对象集合中去。
+
+```java
+@Service
+@Slf4j
+@Transactional
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Override
+    public List<VoUser> selectUserListCondition(Integer roleId,
+                                                Integer currentPage,
+                                                Integer pageSize) {
+        User user = new User();
+        user.setRoleId(roleId);
+        user.setCurrentPage(currentPage);
+        user.setPageSize(pageSize);
+        List<User> userList = userMapper.selectList(user);
+        ArrayList<VoUser> voUserList = new ArrayList<>();
+        //直接采用VoUser构造方法
+        userList.forEach(user1 -> voUserList.add(new VoUser(user1)));
+        return voUserList;
+    }
+
+    @Override
+    public Long selectTotalSize(User user) {
+        return userMapper.count(user);
+    }
+
+}
+```
+
+
+
+**POJO——DAO——VO关系**
+
+经过DAO层的查询出来的结果是POJO对象，可能包含我们不期望返回给前端的属性，比如：password。那么在service层我们就可以将POJO对象转为VO对象，最后再经由controller转发给前端的时候就是我们期望返回的数据结构类型了。
+
+![image-20210426180756228](img/image-20210426180756228.png)
+
+### 密码加密
+
+需要使用到MD5的工具类`src/utils/Md5Utils.java`，其中有两个方法：1、获得随机盐。2、将规则和原密码和盐利用MD5进行混淆。
+
+```java
+public class Md5Utils {
+
+    /**
+     * 获得随机盐值
+     * @return                  随机盐
+     */
+    public static Integer randomSalt(){
+        return (int)(Math.random()*Integer.MAX_VALUE);
+    }
+
+    /**
+     * 生成md5：
+     *  规则：密码+'dsxssx'+随机盐
+     * @param password
+     * @param randSalt
+     * @return                  经过md5算法后的password
+     */
+    public static String md5Password(String password,Integer randSalt){
+        byte[] passwordByte = (password +"dsxssx"+ randSalt).getBytes();
+        return DigestUtils.md5DigestAsHex(passwordByte);
+    }
+}
+```
+
+在新增用户的时候就进行先生成一个随机盐，然后利用随机盐混淆密码后再进入插入操作：`src/service/UserService.java`
+
+```java
+@Service
+@Slf4j
+@Transactional
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private SaltMapper saltMapper;
+
+    @Override
+    public Boolean insertUser(VoUser voUser) {
+        try {
+            User user = new User();
+            user.setUuid(UUID.randomUUID().toString());
+            user.setUsername(voUser.getUsername());
+            Integer randomSalt = Md5Utils.randomSalt(); 				//生成随机盐
+            String password = voUser.getUsername()+"123";                   //初始密码为：用户名+123
+            String md5Password = Md5Utils.md5Password(password,randomSalt); //密码+随机盐生成md5
+            user.setPassword(md5Password);
+            user.setName(voUser.getName());
+            user.setPhone(voUser.getPhone());
+            user.setRoleId(voUser.getRole().getId());
+            userMapper.insertOne(user);
+
+            Salt salt = new Salt();
+            salt.setId(user.getId()); //将成功插入的用户的id作为盐的id存入
+            salt.setUsername(voUser.getUsername());
+            salt.setValue(randomSalt);
+            saltMapper.insertOne(salt);
+
+            return true;
+        } catch (Exception e){
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly(); //事务回滚
+        }
+        return false;
+    }
+
+
+}
+```
+
+其中，用到了Spring的事务，try代码块中如果发生异常，则整个事务发生回滚。具体参看：[事务处理](#transactional)
+
+### <span id='transactional'>事务处理</span>
+
+有的时候会出现同时插入很多表，并且可能需要用到插入到第一次表中的返回数据或者必须保证两个表同时插入成功。但是有的时候可能发生不可抗力或者出现异常，第一个表插入成功了，而第二个表却没有插入成功，这是我们不期望看到的，所以本项目就引入了spring的事务处理。
+
+期望的业务利用try代码块包裹起来
+
+```java
+try{
+    insert1();
+    insert2();
+}
+```
+
+然后利用catch捕获异常，只要发生异常事务就回滚
+
+```java
+catch (Exception e){
+    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly(); //事务回滚
+}
+```
 
 ### 分页实现
 
@@ -1665,8 +2144,6 @@ offset = pageSize * (currentPage - 1)  		#起始下标=每页记录数x（当前
 rows = pageSize								#记录数
 ```
 
-
-
 **Service**
 
 在Service中传入分页的条件就可以了
@@ -1688,9 +2165,76 @@ public interface UserService {
 }
 ```
 
+最后经过controller的处理
 
+```java
+@RestController
+@RequestMapping("/user")
+@CrossOrigin("*")
+public class UserController {
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/selectList")
+    public ResultResponse selectList(@RequestParam(required = false)Integer currentPage,
+                                     @RequestParam(required = false)Integer pageSize){
+        List<VoUser> voUserList = userService.selectUserList(currentPage, pageSize);
+        User user = new User();
+        Long totalSize = userService.selectTotalSize(user);
+        VoList<VoUser> voList = new VoList<>();
+        voList.setCurrentPage(currentPage);
+        voList.setPageSize(pageSize);
+        voList.setTotalSize(totalSize);
+        voList.setItems(voUserList);
+        return new ResultResponse()
+                .setMessage("查询用户列表")
+                .setData(voList);
+    }
+
+}
+```
+
+返回这样的数据结构：
+
+```json
+{
+    "code": 20000,
+    "message": "查询用户",
+    "timestamp": 1541512312312,
+    "data": {
+        "currentPage": 1,
+        "pageSize": 10,
+        "totalSize": 20,
+        "items": [
+            {
+                "id": 1,
+                "name": "测试1"
+            },
+            {
+               "id": 2,
+                "name": "测试2"
+            },
+            ...
+        ]
+    }
+}
+```
 
 ## 缺陷（待更新）
 
-TODO
+### 全局异常处理
+
+异常处理在前后端开发中应该是需要非常重视的一个模块，但是在该项目中并没有很好地预定义一些异常，也没有预定义一些异常状态码
+
+> **解决方案**
+>
+> 在后端的自定义请求返回体`ResultResponse`中预定义一些自定义异常状态码，然后前端根据返回的data中的code判断自定义异常码，再根据统一定义的状态码的意义返回给用户进行提示。
+
+### 获取操作IP地址
+
+在上述[日志管理](#logger)中有提到，在通过Nginx反向代理服务的时候出现了问题，直接将用户访问的真实IP经过正向代理后然后再经过反向代理到具体日志微服务中的时候直接将Nginx服务器的本机地址代理到服务当中去了。下个版本预计修复。
+
+> **解决方案**
+>
+> 不用Nginx反向代理，使用Nginx直接转发到服务。
 
