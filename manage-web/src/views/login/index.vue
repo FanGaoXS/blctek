@@ -85,7 +85,7 @@ export default {
       loginForm: {
         username: undefined,
         password: undefined,
-        validityDay: 7
+        validityDay: 1
       },
       loginRules: {
         username: [

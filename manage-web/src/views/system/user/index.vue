@@ -15,7 +15,7 @@
           size="medium"
           round
           icon="el-icon-upload"
-          :disabled="!checkPermission(['admin','developer'])"
+          v-permission="['admin','developer']"
           @click="handleInsert" style="margin-left: 15px">添加</el-button>
       </div>
       <el-table
@@ -63,15 +63,19 @@
               size="medium"
               round
               icon="el-icon-edit"
+              :disabled="scope.row.role.name==='admin'"
               @click="handleUpdate(scope.row,scope.$index)"
-              :disabled="(scope.row.username==='admin')||!(checkPermission(['admin','developer']))">修改</el-button>
+              v-permission="['admin','developer']">
+              修改</el-button>
             <el-button
               type="danger"
               size="medium"
               round
               icon="el-icon-delete"
               @click="handleDelete(scope.row,scope.$index)"
-              :disabled="(scope.row.username==='admin')||!(checkPermission(['admin','developer']))">删除</el-button>
+              :disabled="scope.row.role.name==='admin'"
+              v-permission="['admin','developer']">
+              删除</el-button>
           </template>
         </el-table-column>
 
@@ -167,9 +171,12 @@
     validatePhone
   } from "@/utils/validate";
 
-  import checkPermission from "@/utils/permission";
+  import permission from "@/directive/permission/permission";
 
   export default {
+    directives:{
+      permission
+    },
     name: "index",
     data() {
       const validatorUsername = (rule, value, callback) => {
@@ -232,7 +239,7 @@
     },
     created() {
       this.fetchRoleOptions();
-      this.fetchList();
+      this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
     },
     methods: {
       // 清空对话框表单
@@ -285,7 +292,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList();
+              this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
             }).catch(error=>{
               console.log(error)
               this.buttonLoading = false
@@ -304,7 +311,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList();
+              this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
             }).catch(error=>{
               console.log(error)
               this.buttonLoading = false
@@ -318,19 +325,16 @@
             title: '成功',
             message: res.message + ' 成功！'
           })
-          if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
-            this.listQuery.currentPage-- //则页码减一
-          }
-          this.fetchList();
+          this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
         })
       },
       handleListQueryChange(){
-        this.fetchList();
+        this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
       },
       //拉取表格数据
-      async fetchList() {
+      async fetchList(roleId,currentPage,pageSize) {
         this.listLoading = true
-        const { data:userList } = await getUserList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize)
+        const { data:userList } = await getUserList(roleId,currentPage,pageSize)
         this.list = userList.items
         this.listQuery.currentPage = userList.currentPage
         this.listQuery.pageSize = userList.pageSize
@@ -342,8 +346,7 @@
         getRoleList(null,null).then(res=>{
           this.roleOptions = res.data.items;
         })
-      },
-      checkPermission
+      }
     },
   }
 </script>

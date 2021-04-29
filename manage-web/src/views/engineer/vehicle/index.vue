@@ -86,14 +86,14 @@
               size="medium"
               round
               icon="el-icon-edit"
-              :disabled="!checkPermission(['admin','developer','supervisor'])"
+              v-permission="['admin','developer','supervisor']"
               @click="handleUpdate(scope.row,scope.$index)">修改</el-button>
             <el-button
               type="danger"
               size="medium"
               round
               icon="el-icon-delete"
-              :disabled="!checkPermission(['admin','developer'])"
+              v-permission="['admin','developer','supervisor']"
               @click="handleDelete(scope.row,scope.$index)">删除</el-button>
           </template>
         </el-table-column>
@@ -182,173 +182,172 @@
 
 <script>
 
-import {
-  plateNumberFilter,
-  timeFilter
-} from "@/utils/global-filters";
-
-import {
-  deleteVehicle,  //删除车辆信息的网络请求
-  getVehicleList, //获得所有车辆的网络请求
-  updateVehicle   //修改车辆信息的网络请求
-} from "@/api/engineer";
-
-import {
-  getModelByVehicle  //获取类型的网络请求
-} from "@/api/model";
-
-import {
-  IMAGE_PREFIX_URL  //图片资源前缀
-} from "@/utils/global-variable";
-
-import checkPermission from "@/utils/permission";
-
-export default {
-  filters: {
+  import {
     plateNumberFilter,
-    timeFilter,
-    //车牌类型过滤
-    plateTypeFilter(plateType){
-      // 如果是汽油车则显示灰色样式，新能源显示success样式
-      const plateTypeMap = {
-        '汽油车': '',
-        '新能源': 'success',
-      };
-      return plateTypeMap[plateType];
-    }
-  },
-  data() {
-    return {
-      buttonLoading: false,
-      dialogFormVisible: false,
-      options:[
-        {
-          name: ''
-        }
-      ],
-      tempForm: {
-        model:{
+    timeFilter
+  } from "@/utils/global-filters";
 
-        },
-        driver:{
+  import {
+    deleteVehicle,  //删除车辆信息的网络请求
+    getVehicleList, //获得所有车辆的网络请求
+    updateVehicle   //修改车辆信息的网络请求
+  } from "@/api/engineer";
 
-        }
-      },
-      listQuery:{
-        currentPage: 1,
-        pageSize: 10,
-        totalSize: 0
-      },
-      list: [
+  import {
+    getModelByVehicle  //获取类型的网络请求
+  } from "@/api/model";
 
-      ],
-      listLoading: true,
-      IMAGE_URL: IMAGE_PREFIX_URL+'engineer/' //图片URL
-    }
-  },
-  created() {
-    //组件初始化完成后取得数据并且填充
-    this.fetchOptions();
-    this.fetchList();
-  },
-  methods: {
+  import {
+    IMAGE_PREFIX_URL  //图片资源前缀
+  } from "@/utils/global-variable";
 
-    //分页组件中当前页改变时
-    handleCurrentChange(){
-      //根据当前页和每页记录数重新拉取数据
-      this.fetchList()
+  import permission from "@/directive/permission/permission";
+
+  export default {
+    directives:{
+      permission
     },
-
-    handleUpdate(row,index){
-      /*console.log('handleUpdate',row)
-      console.log('handleUpdate',index)*/
-      this.dialogFormVisible = true;
-      this.tempForm = {
-        id: row.id,
-        deviceId: row.deviceId,
-        type: row.type,
-        plateType: row.plateType,
-        vehicleNumber: row.vehicleNumber,
-        driver: {
-          id: row.driver.id,
-          name: row.driver.name,
-          phone: row.driver.phone
-        },
-        model: {
-          id: row.model.id,
-          name: row.model.name
-        }
+    filters: {
+      plateNumberFilter,
+      timeFilter,
+      //车牌类型过滤
+      plateTypeFilter(plateType){
+        // 如果是汽油车则显示灰色样式，新能源显示success样式
+        const plateTypeMap = {
+          '汽油车': '',
+          '新能源': 'success',
+        };
+        return plateTypeMap[plateType];
       }
     },
+    data() {
+      return {
+        buttonLoading: false,
+        dialogFormVisible: false,
+        options:[
+          {
+            name: ''
+          }
+        ],
+        tempForm: {
+          model:{
 
-    handleDelete(row,index){
-      /*console.logger('handleDelete',row)
-      console.logger('handleDelete',index)*/
-      this.$confirm('此操作将永久删除记录, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.deleteVehicle(row,index)
-      }).catch()
+          },
+          driver:{
+
+          }
+        },
+        listQuery:{
+          currentPage: 1,
+          pageSize: 10,
+          totalSize: 0
+        },
+        list: [
+
+        ],
+        listLoading: true,
+        IMAGE_URL: IMAGE_PREFIX_URL+'engineer/' //图片URL
+      }
     },
-
-    updateVehicle(){
-      this.buttonLoading = true;
-      updateVehicle(this.tempForm).then(res=>{
-        this.dialogFormVisible = false;
-        this.handleCurrentChange()
-        this.$notify({
-          type: 'success',
-          message: '修改车辆信息成功！'
-        })
-        this.buttonLoading = false;
-      }).catch(error=>{
-        console.log(error)
-        this.$notify({
-          type: 'error',
-          message: '修改车辆信息失败请联系管理员'+error
-        })
-        this.buttonLoading = false;
-      });
+    created() {
+      //组件初始化完成后取得数据并且填充
+      this.fetchOptions();
+      this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize);
     },
+    methods: {
 
-    deleteVehicle(row,index){
-      deleteVehicle(row).then(res=>{
-        this.$notify({
-          type: 'success',
-          message: '删除车辆信息成功！'
-        })
-        if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
-          this.listQuery.currentPage-- //则页码减一
+      //分页组件中当前页改变时
+      handleCurrentChange(){
+        //根据当前页和每页记录数重新拉取数据
+        this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
+      },
+
+      handleUpdate(row,index){
+        /*console.log('handleUpdate',row)
+        console.log('handleUpdate',index)*/
+        this.dialogFormVisible = true;
+        this.tempForm = {
+          id: row.id,
+          deviceId: row.deviceId,
+          type: row.type,
+          plateType: row.plateType,
+          vehicleNumber: row.vehicleNumber,
+          driver: {
+            id: row.driver.id,
+            name: row.driver.name,
+            phone: row.driver.phone
+          },
+          model: {
+            id: row.model.id,
+            name: row.model.name
+          }
         }
-        this.fetchList()
-        this.buttonLoading = false;
-      }).catch(error=> {
-        console.log(error);
-        this.$notify({
-          type: 'error',
-          message: '删除车辆信息失败请联系管理员'+error
+      },
+
+      handleDelete(row,index){
+        /*console.logger('handleDelete',row)
+        console.logger('handleDelete',index)*/
+        this.$confirm('此操作将永久删除记录, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.deleteVehicle(row,index)
+        }).catch()
+      },
+
+      updateVehicle(){
+        this.buttonLoading = true;
+        updateVehicle(this.tempForm).then(res=>{
+          this.dialogFormVisible = false;
+          this.handleCurrentChange()
+          this.$notify({
+            type: 'success',
+            message: '修改车辆信息成功！'
+          })
+          this.buttonLoading = false;
+        }).catch(error=>{
+          console.log(error)
+          this.$notify({
+            type: 'error',
+            message: '修改车辆信息失败请联系管理员'+error
+          })
+          this.buttonLoading = false;
+        });
+      },
+
+      deleteVehicle(row,index){
+        deleteVehicle(row).then(res=>{
+          this.$notify({
+            type: 'success',
+            message: '删除车辆信息成功！'
+          })
+          this.handleCurrentChange()
+          this.buttonLoading = false;
+        }).catch(error=> {
+          console.log(error);
+          this.$notify({
+            type: 'error',
+            message: '删除车辆信息失败请联系管理员'+error
+          })
+          this.buttonLoading = false;
         })
-        this.buttonLoading = false;
-      })
+      },
+      async fetchOptions() {
+        const { data:modelList } = await getModelByVehicle() //同步获取类型列表
+        this.options = modelList.items
+      },
+      async fetchList(currentPage,pageSize){
+        this.listLoading = true
+        const { data:vehicleList } = await getVehicleList(currentPage,pageSize) //同步获取车辆列表
+        this.list = vehicleList.items
+        this.listQuery.currentPage = vehicleList.currentPage
+        this.listQuery.pageSize = vehicleList.pageSize
+        this.listQuery.totalSize = vehicleList.totalSize
+        this.listLoading = false;
+      }
     },
-    async fetchOptions() {
-      const { data:modelList } = await getModelByVehicle() //同步获取类型列表
-      this.options = modelList.items
-    },
-    async fetchList(){
-      this.listLoading = true
-      const { data:vehicleList } = await getVehicleList(this.listQuery.currentPage,this.listQuery.pageSize) //同步获取车辆列表
-      this.list = vehicleList.items
-      this.listQuery.currentPage = vehicleList.currentPage
-      this.listQuery.pageSize = vehicleList.pageSize
-      this.listQuery.totalSize = vehicleList.totalSize
-      this.listLoading = false;
-    },
-    checkPermission
-  },
-}
+  }
 </script>
 
 <style>

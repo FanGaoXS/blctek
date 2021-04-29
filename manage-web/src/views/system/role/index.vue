@@ -7,7 +7,7 @@
           size="medium"
           round
           icon="el-icon-upload"
-          :disabled="!checkPermission(['admin','developer'])"
+          v-permission="['admin','developer']"
           @click="handleInsert">添加</el-button>
       </div>
       <el-table
@@ -49,15 +49,18 @@
               size="medium"
               round
               icon="el-icon-edit"
-              :disabled="!checkPermission(['admin','developer'])"
-              @click="handleUpdate(scope.row,scope.$index)">修改</el-button>
+              v-permission="['admin','developer']"
+              @click="handleUpdate(scope.row,scope.$index)">
+              修改</el-button>
             <el-button
               type="danger"
               size="medium"
               round
               icon="el-icon-delete"
               @click="handleDelete(scope.row,scope.$index)"
-              :disabled="(scope.row.name==='admin')||!(checkPermission(['admin','developer']))">删除</el-button>
+              :disabled="scope.row.name==='admin'"
+              v-permission="['admin','developer']">
+              删除</el-button>
           </template>
         </el-table-column>
 
@@ -137,9 +140,12 @@
     validIsChinese
   } from '@/utils/validate'
 
-  import checkPermission from "@/utils/permission";
+  import permission from "@/directive/permission/permission";
 
   export default {
+    directives:{
+      permission
+    },
     name: "index",
     data() {
       const validateRoleName = (rule, value, callback) => {
@@ -189,7 +195,7 @@
       }
     },
     created() {
-      this.fetchList()
+      this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
     },
     methods: {
       // 清空对话框表单
@@ -235,7 +241,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList()
+              this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
             }).catch(error=>{
               this.buttonLoading = false
             })
@@ -253,7 +259,7 @@
               })
               this.dialogFormVisible = false
               this.buttonLoading = false
-              this.fetchList()
+              this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
             }).catch(error=>{
               this.buttonLoading = false
             })
@@ -266,25 +272,21 @@
             title: '成功',
             message: res.message + ' 成功！'
           })
-          if (this.list.length===1&&this.listQuery.currentPage!==1){ //如果被删除的这项是最后一个并且不是第一页的最后一个
-            this.listQuery.currentPage-- //则页码减一
-          }
-          this.fetchList()
+          this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
         })
       },
       handleListQueryChange(){
-        this.fetchList()
+        this.fetchList(this.listQuery.currentPage,this.listQuery.pageSize)
       },
-      async fetchList() {
+      async fetchList(currentPage,pageSize) {
         this.listLoading = true
-        const { data:roleList } = await getRoleList(this.listQuery.currentPage,this.listQuery.pageSize)
+        const { data:roleList } = await getRoleList(currentPage,pageSize)
         this.list = roleList.items
         this.listQuery.currentPage = roleList.currentPage
         this.listQuery.pageSize = roleList.pageSize
         this.listQuery.totalSize = roleList.totalSize
         this.listLoading = false
-      },
-      checkPermission
+      }
     },
   }
 </script>
