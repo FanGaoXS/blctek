@@ -328,13 +328,17 @@
           this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
         })
       },
+      handleListQueryConditionChange(){ //利用关键字查询分页时，将当前页置为1再重新请求数据
+        this.listQuery.currentPage = 1
+        this.fetchList()
+      },
       handleListQueryChange(){
-        this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
+        this.fetchList();
       },
       //拉取表格数据
-      async fetchList(roleId,currentPage,pageSize) {
+      async fetchList() {
         this.listLoading = true
-        const { data:userList } = await getUserList(roleId,currentPage,pageSize)
+        const { data:userList } = await getUserList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize)
         this.list = userList.items
         this.listQuery.currentPage = userList.currentPage
         this.listQuery.pageSize = userList.pageSize
