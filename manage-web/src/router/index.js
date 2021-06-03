@@ -283,6 +283,23 @@ export const asyncRoutes = [
 
     ]
   },
+  {
+    path: '/online',
+    component: Layout,
+    redirect: '/online/index',
+    children: [
+      {
+        path: 'index',
+        name: 'OnlineIndex',
+        component: () => import('@/views/online/index'),
+        meta: {
+          title: '实时监理',
+          icon: 'el-icon-map-location',
+          roles: [ 'admin', 'developer', 'ghost', 'supervisor' ]
+        }
+      }
+    ]
+  },
 
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
