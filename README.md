@@ -945,7 +945,7 @@ upload(){
 
 ### 逻辑
 
-**后端**持久层在查询列表数据的时候就利用MyBatis定义好分页的SQL预处理语句，查询的时候如果传递再传递当前页和每页多少记录就可以了，为了避免两个都为空而查询所有表耗费大量查询资源，所以默认情况是当前页为1，每页记录数为10。同时利用SQL语句查询总记录数，就能很好地协调前端根据当前页、每页记录数、总记录数获得总共有多少页。[后端手册之分页实现](#back-end-pagination)
+**后端**持久层在查询列表数据的时候就利用MyBatis定义好分页的SQL预处理语句，查询的时候传递当前页和每页多少记录就可以了，为了避免两个都为空而查询所有表耗费大量查询资源，所以默认情况是当前页为1，每页记录数为10。同时利用SQL语句查询总记录数，就能很好地协调前端根据当前页、每页记录数、总记录数获得总共有多少页。[后端手册之分页实现](#back-end-pagination)
 
 **前端**得益于Vue.js的动态绑定的特性，所以每次修改**当前页**和**记录数**就可以重新发起请求然后再次填充页面数据。
 
@@ -1269,7 +1269,7 @@ params: {
 }
 ```
 
-在向后端发起请求后直接赋值`currentPage`、`pageSize`、`totalSize`到页面数据上就可以了
+再向后端发起请求后直接赋值`currentPage`、`pageSize`、`totalSize`到页面数据上就可以了
 
 ```js
 //拉取表格数据
@@ -1432,6 +1432,29 @@ resource
 由于大多数后端项目中都需要对日志表进行增删改查，所以我就选择将日志实体类和日志DAO放置到公共组件当中。
 
 **BasePojo**
+
+```java
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class BasePojo implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 当前页（分页查询）
+     */
+    private Integer currentPage;
+
+    /**
+     * 每页记录数（分页查询）
+     */
+    private Integer pageSize;
+
+}
+```
+
+
 
 上文的[分页实现](#pagination)中讲过，基本上所有的数据库实体都可能用到分页查询，所以将实现分页的基础pojo放置到公共组件的BasePojo中。由于Pojo继承了BasePojo，那么就可以直接使用set或者get来设置或者得到currentPage和pageSize，从而与该Pojo对象一起传入进Mapper中，然后进行符合条件的分页查询。（所以该BasePojo基本只在查询的时候使用）
 
