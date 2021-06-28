@@ -6,28 +6,47 @@
         <el-col :span="18">
           <div class="bg-purple">
             <b-map
-              :center="center"
-            ></b-map>
+              :marker-list="engineerList"
+              :center="center">
+            </b-map>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="bg-purple-dark">
             <el-table
-              :data="centerList"
+              :data="engineerList"
             >
               <el-table-column
-                prop="name"
-                label="地名"
-                width="300">
+                prop="plateNumber"
+                label="车牌"
+                width="150">
               </el-table-column>
+
+              <el-table-column
+                label="状态"
+                width="100">
+                <template slot-scope="{row}">
+                  <el-tag
+                    :type="row.isOnline?'success':'danger'"
+                    effect="dark"
+                  >{{row.isOnline | isOnlineFilter }}</el-tag>
+                </template>
+              </el-table-column>
+
               <el-table-column
                 fixed="right"
                 label="操作"
-                width="100">
+                width="120">
                 <template slot-scope="scope">
-                  <el-button @click="handleButtonClick(scope.row)" type="primary" size="small">查看</el-button>
+                  <el-button
+                    @click="handleButtonClick(scope.row)"
+                    type="primary"
+                    size="small"
+                    :disabled="!scope.row.isOnline"
+                    round>在地图上查看</el-button>
                 </template>
               </el-table-column>
+
             </el-table>
           </div>
         </el-col>
@@ -38,9 +57,18 @@
 </template>
 
 <script>
-import BMap from "./components/Map";
+import BMap from "./components/BMap";
 export default {
   name: "index",
+  filters: {
+    isOnlineFilter(value) {
+      const statusMap = {
+        true: '在线',
+        false: '离线'
+      }
+      return statusMap[value];
+    }
+  },
   components:{
     BMap
   },
@@ -48,25 +76,38 @@ export default {
     return {
       title: '在线监理',
       center: undefined,
-      centerList: [
+      engineerList: [
         {
-          name: '成都',
-          point: [104.066143,30.573095]
+          plateNumber: '川ABP369',
+          isOnline: false,
+          nowPoint: [91.171961,29.653482] //拉萨市政府
         },
         {
-          name: '北京',
-          point: [116.322056,39.89491]
+          plateNumber: '川A46J5E',
+          isOnline: true,
+          nowPoint: [91.100893,29.657435] //西藏大厦
         },
         {
-          name: '拉萨',
-          point: [91.171961,29.653482]
-        }
+          plateNumber: '川AF41J3',
+          isOnline: false,
+          nowPoint: [91.126471,29.697108] //军区总医院
+        },
+        {
+          plateNumber: '川A79D5H',
+          isOnline: true,
+          nowPoint: [91.119261,29.654452] //布达拉宫
+        },
+        {
+          plateNumber: '川AS28T4',
+          isOnline: true,
+          nowPoint: [91.061239,29.642666] //第二医院
+        },
       ]
     }
   },
   methods: {
     handleButtonClick(row) {
-      this.center = row.point
+      this.center = row.nowPoint
     }
   },
 }
