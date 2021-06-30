@@ -5,6 +5,7 @@
       <el-row :gutter="20">
         <el-col :span="18">
           <div class="bg-purple">
+            <!-- 传递点坐标数组和地图中心点 -->
             <b-map
               :marker-list="engineerList"
               :center="center">
@@ -14,8 +15,8 @@
         <el-col :span="6">
           <div class="bg-purple-dark">
             <el-table
-              :data="engineerList"
-            >
+              :data="engineerList">
+
               <el-table-column
                 prop="plateNumber"
                 label="车牌"
@@ -107,6 +108,7 @@ export default {
   },
   methods: {
     handleButtonClick(row) {
+      // 切换当前地图中心点到选中的车辆的当前坐标点
       this.center = row.nowPoint
     }
   },
