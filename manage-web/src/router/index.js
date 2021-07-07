@@ -293,9 +293,26 @@ export const asyncRoutes = [
         name: 'OnlineIndex',
         component: () => import('@/views/online/index'),
         meta: {
-          title: '实时监理',
+          title: '实时监理（beta）',
           icon: 'el-icon-map-location',
           roles: [ 'admin', 'developer', 'ghost', 'supervisor' ]
+        }
+      }
+    ]
+  },
+  {
+    path: '/lottery',
+    component: Layout,
+    redirect: '/lottery/index',
+    children: [
+      {
+        path: 'index',
+        name: 'LotteryIndex',
+        component: () => import('@/views/lottery/index'),
+        meta: {
+          title: '抽奖登记（beta）',
+          icon: 'el-icon-present',
+          roles: [ 'admin', 'developer' ]
         }
       }
     ]
