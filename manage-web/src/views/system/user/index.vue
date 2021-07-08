@@ -325,7 +325,7 @@
             title: '成功',
             message: res.message + ' 成功！'
           })
-          this.fetchList(this.listQuery.roleId,this.listQuery.currentPage,this.listQuery.pageSize);
+          this.fetchList();
         })
       },
       handleListQueryConditionChange(){ //利用关键字查询分页时，将当前页置为1再重新请求数据

@@ -32,6 +32,7 @@ axiosInstance.interceptors.request.use(
 // response拦截器
 axiosInstance.interceptors.response.use(
   response => {
+
     const res = response.data
 
     if (res.code !== 20000 && res.code!==0 ) {

@@ -2,8 +2,9 @@
   <div class="app-container">
     <el-card shadow="hover">
       <el-table
+        v-loading="listLoading"
         max-height="800"
-        height="800"
+        height="750"
         border
         stripe
         highlight-current-row
@@ -43,14 +44,31 @@
           label="操作"
           fixed="right"
           width="300">
-          <el-button>删除</el-button>
+          <template slot-scope="scope">
+            <el-button
+              type="danger"
+              size="medium"
+              round
+              icon="el-icon-delete"
+              @click="handleRemoveUserButton(scope.row,scope.$index)">删除</el-button>
+          </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        style="margin-top: 20px"
+        :total="listQuery.totalSize"
+        layout="total"></el-pagination>
     </el-card>
   </div>
 </template>
 
 <script>
+
+import {
+  selectUserList,
+  removeUser
+} from "@/api/lottery/user";
+
 export default {
   name: "index",
   filters: {
@@ -58,22 +76,45 @@ export default {
       return new Date(value).toLocaleString();
     }
   },
+  created() {
+    this.fetchList()
+  },
+  methods: {
+    async fetchList() {
+      this.listLoading = true
+      const { data:list } = await selectUserList()
+      // console.log(list)
+      this.list = list.items
+      this.listQuery.totalSize = list.totalSize
+      this.listLoading = false
+    },
+    handleRemoveUserButton(row,index){
+      // console.log(row,index)
+      this.$confirm('此操作将永久删除用户的登记记录, 是否继续?','提示',{
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(()=>{
+        removeUser(row.id).then(res=>{
+          // console.log(res)
+          this.$notify({
+            title: res.data?'成功':'失败',
+            type: res.data?'success':'error'
+          })
+          this.fetchList()
+        })
+      }).catch(()=>{})
+    },
+  },
   data() {
     return {
-      list: [
-        {
-          id: 0,
-          name: '好了好了我知道了',
-          avatar: 'https://thirdwx.qlogo.cn/mmopen/vi_32/ybONbOCb9TajjQLSAx2mpgL0ibzTwxPwLNgo6T0Z7iaGH7ef1UweNl9bIzS1zeyWARdy3kTIYkAAFEy5tm87OYHg/132',
-          time: new Date()
-        },
-        {
-          id: 1,
-          name: '好了好了我知道了',
-          avatar: 'https://thirdwx.qlogo.cn/mmopen/vi_32/ybONbOCb9TajjQLSAx2mpgL0ibzTwxPwLNgo6T0Z7iaGH7ef1UweNl9bIzS1zeyWARdy3kTIYkAAFEy5tm87OYHg/132',
-          time: new Date()
-        }
-      ]
+      listLoading: true,
+      listQuery:{
+        totalSize: undefined,
+        currentPage: 1,
+        pageSize: 10
+      },
+      list: []
     }
   },
 }

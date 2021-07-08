@@ -304,6 +304,7 @@ export const asyncRoutes = [
     path: '/lottery',
     component: Layout,
     redirect: '/lottery/index',
+    name: 'Lottery',
     children: [
       {
         path: 'index',
@@ -313,8 +314,8 @@ export const asyncRoutes = [
           title: '抽奖登记（beta）',
           icon: 'el-icon-present',
           roles: [ 'admin', 'developer' ]
-        }
-      }
+        },
+      },
     ]
   },
 
