@@ -3,16 +3,16 @@
     <el-card shadow="hover">
 
       <el-row :gutter="20">
-        <el-col :span="18">
+        <el-col :span="15">
           <div class="bg-purple">
-            <!-- 传递点坐标数组和地图中心点 -->
+            <!-- 传递点坐标数组和地图中心点（只传递isOnline为true的对象） -->
             <b-map
-              :marker-list="engineerList"
+              :marker-list="engineerList.filter(item=>{return item.isOnline === true})"
               :center="center">
             </b-map>
           </div>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="9">
           <div class="bg-purple-dark">
             <el-table
               :data="engineerList">
@@ -20,11 +20,13 @@
               <el-table-column
                 prop="plateNumber"
                 label="车牌"
-                width="150">
+                align="center"
+                width="100">
               </el-table-column>
 
               <el-table-column
                 label="状态"
+                align="center"
                 width="100">
                 <template slot-scope="{row}">
                   <el-tag
@@ -37,14 +39,25 @@
               <el-table-column
                 fixed="right"
                 label="操作"
-                width="120">
+                align="center"
+                min-width="280">
                 <template slot-scope="scope">
                   <el-button
                     @click="handleButtonClick(scope.row)"
                     type="primary"
-                    size="small"
+                    size="medium"
+                    round
+                    icon="el-icon-map-location"
                     :disabled="!scope.row.isOnline"
-                    round>在地图上查看</el-button>
+                    >在地图上查看</el-button>
+                  <el-badge is-dot :hidden="false" style="margin: 10px">
+                    <el-button
+                      type="warning"
+                      size="medium"
+                      icon="el-icon-chat-line-round"
+                      round
+                      >查看消息</el-button>
+                  </el-badge>
                 </template>
               </el-table-column>
 
@@ -105,6 +118,9 @@ export default {
         },
       ]
     }
+  },
+  created() {
+
   },
   methods: {
     handleButtonClick(row) {

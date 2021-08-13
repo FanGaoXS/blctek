@@ -1,3 +1,4 @@
+<!-- 基于vue-amap的自定义地图组件，包含地图容器、坐标点以及坐标点文字 -->
 <template>
   <el-amap
     vid="aMap"
@@ -5,8 +6,7 @@
     :zoom="zoom"
     :center="center"
     :plugin="plugins">
-
-    <template v-for=" marker in markerList " v-if="marker.isOnline">
+    <template v-for=" marker in markerList ">
       <!-- 坐标点图标 -->
       <el-amap-marker
         :position="marker.nowPoint"

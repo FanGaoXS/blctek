@@ -294,13 +294,13 @@ export const asyncRoutes = [
         component: () => import('@/views/online/index'),
         meta: {
           title: '实时监理（beta）',
-          icon: 'el-icon-map-location',
+          icon: 'el-icon-place',
           roles: [ 'admin', 'developer', 'ghost', 'supervisor' ]
         }
       }
     ]
   },
-  {
+  /*{
     path: '/lottery',
     component: Layout,
     redirect: '/lottery/index',
@@ -317,7 +317,7 @@ export const asyncRoutes = [
         },
       },
     ]
-  },
+  },*/
 
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
