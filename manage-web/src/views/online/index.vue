@@ -56,6 +56,7 @@
                       size="medium"
                       icon="el-icon-chat-line-round"
                       round
+                      @click="handleMessageButtonClick(scope.row)"
                       >查看消息</el-button>
                   </el-badge>
                 </template>
@@ -126,6 +127,18 @@ export default {
     handleButtonClick(row) {
       // 切换当前地图中心点到选中的车辆的当前坐标点
       this.center = row.nowPoint
+    },
+    handleMessageButtonClick(row){
+      console.log(row);
+      // router的resolve对象
+      let resolve = this.$router.resolve({
+        path: '/message',
+        query: {
+          yourself: row.plateNumber
+        }
+      });
+      // features参数，请参看https://www.w3school.com.cn/jsref/met_win_open.asp
+      window.open(resolve.href,'_blank','width=800,height=800,left=100,top=100,resizable=0'); //取href，然后利用window.open以_blank（新的标签页）的方式打开
     }
   },
 }

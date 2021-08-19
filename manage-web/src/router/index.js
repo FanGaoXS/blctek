@@ -21,10 +21,20 @@ export const constantRoutes = [
       }
     ]
   },
-  {
+
+  {   //登录页
     path: '/login',
     component: () => import('@/views/login/index'),
     hidden: true
+  },
+
+  {   //聊天页
+    path: '/message',
+    component: () => import('@/views/message/index'),
+    hidden: true,
+    meta: {
+      title: '查看消息'
+    }
   },
 
   {
