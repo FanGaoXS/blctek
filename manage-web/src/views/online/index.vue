@@ -137,7 +137,7 @@ export default {
           yourself: row.plateNumber
         }
       });
-      // features参数，请参看https://www.w3school.com.cn/jsref/met_win_open.asp
+      // features参数，参看https://www.w3school.com.cn/jsref/met_win_open.asp
       window.open(resolve.href,'_blank','width=800,height=800,left=100,top=100,resizable=0'); //取href，然后利用window.open以_blank（新的标签页）的方式打开
     }
   },
