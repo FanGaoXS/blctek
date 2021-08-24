@@ -1,0 +1,19 @@
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: message-server
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      stat-view-servlet:
+        enabled: true
+        login-username: mysql
+        login-password: mysql
+
+server:
+  port: 8100
+
+mybatis:
+  mapper-locations: classpath*:mybatis/mapper/*Mapper.xml

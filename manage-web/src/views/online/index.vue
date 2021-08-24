@@ -18,10 +18,12 @@
               :data="engineerList">
 
               <el-table-column
-                prop="plateNumber"
                 label="车牌"
                 align="center"
                 width="100">
+                <template slot-scope="{row}">
+                  {{row.plateNumber | plateNumberFilter}}
+                </template>
               </el-table-column>
 
               <el-table-column
@@ -72,10 +74,17 @@
 </template>
 
 <script>
+
 import BMap from "./components/BMap";
+
+import {
+  plateNumberFilter
+} from "@/utils/global-filters";
+
 export default {
   name: "index",
   filters: {
+    plateNumberFilter,
     isOnlineFilter(value) {
       const statusMap = {
         true: '在线',
@@ -134,7 +143,7 @@ export default {
       let resolve = this.$router.resolve({
         path: '/message',
         query: {
-          yourself: row.plateNumber
+          plateNumber: row.plateNumber
         }
       });
       // features参数，参看https://www.w3school.com.cn/jsref/met_win_open.asp

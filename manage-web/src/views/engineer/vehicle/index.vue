@@ -184,7 +184,8 @@
 
   import {
     plateNumberFilter,
-    timeFilter
+    timeFilter,
+    plateTypeFilter
   } from "@/utils/global-filters";
 
   import {
@@ -211,14 +212,7 @@
       plateNumberFilter,
       timeFilter,
       //车牌类型过滤
-      plateTypeFilter(plateType){
-        // 如果是汽油车则显示灰色样式，新能源显示success样式
-        const plateTypeMap = {
-          '汽油车': '',
-          '新能源': 'success',
-        };
-        return plateTypeMap[plateType];
-      }
+      plateTypeFilter,
     },
     data() {
       return {

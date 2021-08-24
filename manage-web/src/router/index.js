@@ -30,7 +30,7 @@ export const constantRoutes = [
 
   {   //聊天页
     path: '/message',
-    component: () => import('@/views/message/index'),
+    component: () => import('@/views/message/test'),
     hidden: true,
     meta: {
       title: '查看消息'

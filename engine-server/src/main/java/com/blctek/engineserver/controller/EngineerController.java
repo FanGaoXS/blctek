@@ -184,4 +184,12 @@ public class EngineerController {
                 .setMessage("查询 "+type+" 列表");
     }
 
+    @GetMapping("/selectVehicleByVehicleNumber")
+    public ResultResponse selectVehicleByVehicleNumber(@RequestParam(required = true) String vehicleNumber){
+        Engineer vehicle = engineerService.selectVehicleByVehicleNumber(vehicleNumber);
+        return new ResultResponse()
+                .setData(new VoEngineer(vehicle))
+                .setMessage("根据车牌号查询车辆："+vehicleNumber);
+    }
+
 }

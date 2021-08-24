@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blctek.messageserver.mapper.MessageMapper">
+    <!--select的条件sql（全有）-->
+    <sql id="selectCondition">
+        <if test=" id!=null and id!='' ">
+            AND id = #{id}
+        </if>
+        <if test=" content!=null and content!='' ">
+            AND content = #{content}
+        </if>
+        <if test=" sendTime!=null and sendTime!='' ">
+            AND sendTime = #{sendTime}
+        </if>
+        <if test=" receiveTime!=null and receiveTime!='' ">
+            AND receiveTime = #{receiveTime}
+        </if>
+        <if test=" sender!=null and sender!='' ">
+            AND sender = #{sender}
+        </if>
+        <if test=" receiver!=null and receiver!='' ">
+            AND receiver = #{receiver}
+        </if>
+        <if test=" isBroadcast!=null and isBroadcast!='' ">
+            AND isBroadcast = #{isBroadcast}
+        </if>
+    </sql>
+    <!--update的条件sql（除了自增主键id）-->
+    <sql id="updateCondition">
+        <if test=" content!=null and content!='' ">
+            content = #{content},
+        </if>
+        <if test=" sendTime!=null and sendTime!='' ">
+            sendTime = #{sendTime},
+        </if>
+        <if test=" receiveTime!=null and receiveTime!='' ">
+            receiveTime = #{receiveTime},
+        </if>
+        <if test=" sender!=null and sender!='' ">
+            sender = #{sender},
+        </if>
+        <if test=" receiver!=null and receiver!='' ">
+            receiver = #{receiver},
+        </if>
+        <if test=" isBroadcast!=null and isBroadcast!='' ">
+            isBroadcast = #{isBroadcast},
+        </if>
+    </sql>
+    <!--分页的条件sql（当前页，每页记录数）-->
+    <sql id="limitCondition">
+        <if test=" currentPage!=null and currentPage!='' and pageSize!=null and pageSize!='' ">
+            <bind name="offset" value="pageSize*(currentPage-1)"/>
+            <bind name="rows" value="pageSize"/>
+            #{offset},#{rows}
+        </if>
+    </sql>
+    <!--返回的结果集-->
+    <resultMap id="MessageMap" type="com.blctek.messageserver.pojo.Message">
+        <id column="id" property="id"/>
+        <result column="content" property="content"/>
+        <result column="sendTime" property="receiveTime"/>
+        <result column="sender" property="sender"/>
+        <result column="receiver" property="receiver"/>
+        <result column="isBroadcast" property="isBroadcast"/>
+    </resultMap>
+    <!--新增一条记录-->
+    <insert id="insertOne"
+            keyProperty="id"
+            useGeneratedKeys="true"
+            parameterType="com.blctek.messageserver.pojo.Message">
+        INSERT INTO message
+            (content,sendTime,receiveTime,sender,receiver,isBroadcast)
+        VALUES
+            (#{content},#{sendTime},#{receiveTime},#{sender},#{receiver},#{isBroadcast})
+    </insert>
+    <!--删除一条记录-->
+    <delete id="deleteOne"
+            parameterType="com.blctek.messageserver.pojo.Message">
+        DELETE
+        FROM message
+        WHERE id = #{id}
+    </delete>
+    <!--修改一条记录（根据id主键）-->
+    <update id="updateOne"
+            parameterType="com.blctek.messageserver.pojo.Message">
+        UPDATE
+        message
+        <trim prefix="SET" suffixOverrides=",">
+            <include refid="updateCondition"></include>
+        </trim>
+        WHERE
+        id = #{id}
+    </update>
+    <!--查询所有（可分页，可单条件，可多条件）-->
+    <select id="selectList"
+            parameterType="com.blctek.messageserver.pojo.Message"
+            resultMap="MessageMap">
+        SELECT
+            *
+        FROM
+            message
+        <trim prefix="WHERE" prefixOverrides="AND">
+            <include refid="selectCondition"></include>
+        </trim>
+        ORDER BY
+            sendTime
+        <trim prefix="LIMIT">
+            <include refid="limitCondition"></include>
+        </trim>
+    </select>
+    <!--查询一条（可单条件，可多条件）-->
+    <select id="selectOne"
+            parameterType="com.blctek.messageserver.pojo.Message"
+            resultMap="MessageMap">
+        SELECT
+            *
+        FROM
+            message
+        <trim prefix="WHERE" prefixOverrides="AND">
+            <include refid="selectCondition"></include>
+        </trim>
+    </select>
+    <!--根据主键id（效率高）查询记录数（可单条件，可多条件）-->
+    <select id="count"
+            parameterType="com.blctek.messageserver.pojo.Message"
+            resultType="long">
+        SELECT
+        count(id)
+        FROM
+        message
+        <trim prefix="WHERE" prefixOverrides="AND">
+            <include refid="selectCondition"></include>
+        </trim>
+    </select>
+</mapper>

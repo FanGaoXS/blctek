@@ -1,72 +1,149 @@
 <template>
   <div class="app-container">
-    <h3>对方：{{yourself}}</h3>
-    <h3>我自己：{{myself}}</h3>
-    <ul>
-      <li v-for="item in messageList" :key="item.id">{{item}}</li>
-    </ul>
+    <el-container>
+
+      <el-header height="300">
+        <el-descriptions
+          border
+          title="对方信息">
+          <template slot="extra">
+            <el-button type="primary" size="small" round>详细信息</el-button>
+          </template>
+          <el-descriptions-item label="车牌号">
+            {{yourself.vehicleNumber | plateNumberFilter}}
+          </el-descriptions-item>
+          <el-descriptions-item label="车牌类型">
+            <el-tag :type=" yourself.plateType | plateTypeFilter ">
+              {{yourself.plateType}}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="车辆类型">
+            {{yourself.model.name}}
+          </el-descriptions-item>
+          <el-descriptions-item label="驾驶员">
+            {{yourself.driver.name}}
+          </el-descriptions-item>
+          <el-descriptions-item label="驾驶员联系方式">
+            {{yourself.driver.phone}}
+          </el-descriptions-item>
+        </el-descriptions>
+        <!--        <h3>我自己：{{myself}}</h3>-->
+      </el-header>
+
+      <el-main>
+        <message-record
+          v-for="item in recordList" :key="item.id"
+          :is-left="item.to === yourself.vehicleNumber"
+          :time="item.time | timeFilter "
+          :record="item.content"
+        ></message-record>
+        <infinite-loading @infinite="infiniteHandler"></infinite-loading>
+      </el-main>
+
+      <el-footer>
+        <el-container direction="horizontal ">
+          <el-input
+            v-model="sendMessage"
+            type="textarea">
+          </el-input>
+          <el-button
+            style="margin-left: 20px"
+            type="success"
+            @click="handleSendButton()"
+            plain>
+            发送
+          </el-button>
+        </el-container>
+      </el-footer>
+    </el-container>
   </div>
 </template>
 
 <script>
+
+import MessageRecord from "@/views/message/components/MessageRecord";
+
+import {
+  getVehicleByVehicleNumber
+} from "@/api/engineer";
+
+import {
+  plateNumberFilter,
+  plateTypeFilter,
+  timeFilter
+} from "@/utils/global-filters";
+
+import {
+  recordList
+} from "./data";
+
 export default {
-  name: "index",
+  components:{
+    MessageRecord
+  },
+  filters: {
+    plateNumberFilter,
+    plateTypeFilter,
+    timeFilter
+  },
+  data() {
+    return {
+      title: 'message',
+      sendMessage: '',
+      recordList: recordList,
+      //聊天对方
+      yourself: {
+        vehicleNumber: '',
+        plateType: '',
+        model: {
+          name: ''
+        },
+        driver: {
+          name: '',
+          phone: ''
+        }
+      }
+    }
+  },
   beforeCreate() {
     const width = 800
     const height = 800
     window.resizeTo(width,height) //窗口尺寸调整至800x800
   },
-  data() {
-    return {
-      title: 'message',
-      messageList: [
-        {
-          id: 0,
-          from: 'admin',
-          to: 'driver',
-          time: new Date(),
-          content: '这是一条来自admin发给driver的信息1'
-        },
-        {
-          id: 1,
-          from: 'admin',
-          to: 'driver',
-          time: new Date(),
-          content: '这是一条来自admin发给driver的信息2'
-        },
-        {
-          id: 2,
-          from: 'admin',
-          to: 'driver',
-          time: new Date(),
-          content: '这是一条来自admin发给driver的信息3'
-        },
-        {
-          id: 3,
-          from: 'driver',
-          to: 'admin',
-          time: new Date(),
-          content: '这是一条来自driver发给admin的信息1'
-        }
-      ]
-    }
+  created(){
+    this.fetchData()                  //拉取数据
   },
   methods: {
-
+    fetchData(){
+      this.fetchYourselfByPlateNumber();
+    },
+    fetchYourselfByPlateNumber(){
+      getVehicleByVehicleNumber(this.plateNumber).then(res=>{
+        // console.log(res.data);
+        this.yourself = res.data
+      })
+    },
+    handleSendButton(){
+      this.$message({
+        message: '你即将发送的内容是：'+this.sendMessage,
+        type: 'success',
+        duration: 2000,
+        showClose: true
+      })
+    }
   },
   computed: {
-    myself() {
+    plateNumber() { //从route中获得plateNumber车牌号
+      return this.$route.query.plateNumber;
+    },
+    myself() {      //聊天己方
       const myself = {
         id: this.$store.getters.id,
+        username: this.$store.getters.username,
         name: this.$store.getters.name
       } //从store中获得myself的信息
       console.log('我自己->',myself.name)
       return myself;
-    },
-    yourself() {
-      const yourself = this.$route.query.yourself //从query中获得对方的信息
-      console.log('对方->', yourself)
-      return yourself;
     }
   },
 }
@@ -74,4 +151,17 @@ export default {
 
 <style scoped>
 
+.el-header {
+
+}
+
+.el-main {
+  margin: 20px;
+  background-color: #fafafa;
+  border-radius: 4px
+}
+
+.el-footer {
+
+}
 </style>

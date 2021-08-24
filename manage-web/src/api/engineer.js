@@ -42,7 +42,6 @@ export function updateVehicle(row) {
 
 /**
  *  获取车辆列表
- * @returns {AxiosPromise}
  */
 export function getVehicleList(currentPage,pageSize) {
   const type = "车辆";
@@ -53,6 +52,20 @@ export function getVehicleList(currentPage,pageSize) {
       type,
       currentPage,
       pageSize
+    }
+  });
+}
+
+/**
+ *  根据车牌号获取车辆信息
+ * @param vehicleNumber     车牌号
+ */
+export function getVehicleByVehicleNumber(vehicleNumber) {
+  return request({
+    url: 'engine-server/engineer/selectVehicleByVehicleNumber',
+    method: 'GET',
+    params: {
+      vehicleNumber
     }
   });
 }
