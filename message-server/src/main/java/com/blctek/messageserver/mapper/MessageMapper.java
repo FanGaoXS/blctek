@@ -42,6 +42,14 @@ public interface MessageMapper {
     Integer updateOne(Message message);
 
     /**
+     * 根据车牌号查询所有与之相关的消息记录
+     * @return
+     */
+    List<Message> selectListByPlateNumber(String plateNumber,
+                                          int currentPage,
+                                          int pageSize);
+
+    /**
      * 查询所有集合（可分页，可多条件，可单条件）
      *
      * @param message 消息对象
@@ -64,5 +72,11 @@ public interface MessageMapper {
      * @return 记录数
      */
     Long count(Message message);
+
+    /**
+     * 查询记录数（根据车牌号）
+     * @return 记录数
+     */
+    Long countByPlateNumber(String plateNumber);
 
 }

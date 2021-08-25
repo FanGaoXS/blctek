@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
-    <div v-for="(item, $index) in list" :key="$index">
+    <div v-for="(item, $index) in messageList" :key="$index">
       {{item}}
     </div>
 
-<!--    <infinite-loading @infinite="infiniteHandler"></infinite-loading>-->
+    <infinite-loading @infinite="infiniteHandler"></infinite-loading>
   </div>
 </template>
 
@@ -12,17 +12,23 @@
 import InfiniteLoading from "vue-infinite-loading";
 
 import {
-  getLoggerList
-} from "@/api/logger";
+  getMessageListByPlateNumber
+} from "@/api/message";
 
 export default {
   components:{
     InfiniteLoading
   },
+  props: {
+    plateNumber: {
+      type: String,
+      default: '川ABP369'
+    },
+  },
   data() {
     return {
-      page: 1,
-      list: [],
+      currentPage: 1,
+      messageList: [],
     };
   },
   created() {
@@ -30,26 +36,20 @@ export default {
   },
   methods: {
     fetchData(){
-      this.fetchList();
+      this.fetchMessageList()
     },
-    fetchList(){
-      getLoggerList(null,null,1,10).then(({data})=>{
-        console.log(data);
-        this.list = data.items;
+    fetchMessageList(){
+      getMessageListByPlateNumber(this.plateNumber,this.currentPage).then(res=>{
+        console.log(res)
+        this.messageList = res.data.items
+      }).catch(error=>{
+        console.log(error)
       })
     },
-    infiniteHandler($state) {
-      getLoggerList(null,null,1,200).then(({ data }) => {
-        console.log(data);
-        if (data.items.length) {  //有数据
-          this.page += 1;
-          this.list.push(...data.items);
-          $state.loaded();      //此次获取的数据加载完
-        } else {
-          $state.complete();    //没有数据了
-        }
-      });
-    },
+    infiniteHandler(){
+
+    }
+
   },
 };
 </script>

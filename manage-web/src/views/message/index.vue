@@ -37,7 +37,6 @@
           :time="item.time | timeFilter "
           :record="item.content"
         ></message-record>
-        <infinite-loading @infinite="infiniteHandler"></infinite-loading>
       </el-main>
 
       <el-footer>
@@ -47,6 +46,7 @@
             type="textarea">
           </el-input>
           <el-button
+            :disabled="buttonLoading"
             style="margin-left: 20px"
             type="success"
             @click="handleSendButton()"
@@ -77,6 +77,11 @@ import {
   recordList
 } from "./data";
 
+import {
+  insertMessage,
+  getMessageListByPlateNumber
+} from "@/api/message";
+
 export default {
   components:{
     MessageRecord
@@ -88,6 +93,7 @@ export default {
   },
   data() {
     return {
+      buttonLoading: false,
       title: 'message',
       sendMessage: '',
       recordList: recordList,
@@ -123,12 +129,37 @@ export default {
         this.yourself = res.data
       })
     },
+    clearSendMessage(){
+      this.sendMessage = '';
+    },
     handleSendButton(){
-      this.$message({
-        message: '你即将发送的内容是：'+this.sendMessage,
-        type: 'success',
-        duration: 2000,
-        showClose: true
+      const message = {
+        content: this.sendMessage,
+        sender: this.myself.username,
+        receiver: this.plateNumber
+      }
+      this.buttonLoading = true;
+      insertMessage(message).then(res=>{
+        // console.log(res)
+        this.$message({
+          message: '消息发送'+(res.data?'成功':'失败'),
+          type: res.data?'success':'error',
+          duration: 2000,
+          showClose: true
+        })
+        if (res.data) {
+          this.clearSendMessage();
+        }
+        this.buttonLoading = false;
+      }).catch(error=>{
+        console.log(error)
+        this.$message({
+          message: '消息发送失败，请联系管理员->'+error,
+          type: 'error',
+          duration: 2000,
+          showClose: true
+        })
+        this.buttonLoading = false;
       })
     }
   },

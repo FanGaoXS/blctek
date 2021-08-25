@@ -19,7 +19,7 @@ public interface MessageService {
 
     boolean deleteMessage(int id);
 
-    VoList<VoMessageResponse> selectMessageListBySenderAndBroadcast(String sender);
-
-    VoList<VoMessageResponse> selectMessageListBySenderAndReceiver(String sender, String receiver);
+    VoList<VoMessageResponse> selectMessageListByPlateNumber(String plateNumber,
+                                                             int currentPage,
+                                                             int pageSize);
 }

@@ -1,5 +1,6 @@
 package com.blctek.messageserver.vo.response;
 
+import com.blctek.messageserver.pojo.Message;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,5 +31,13 @@ public class VoMessageResponse implements Serializable {
     private String sender;
 
     private String receiver;
+
+    public VoMessageResponse(Message message){
+        id = message.getId();
+        content = message.getContent();
+        sendTime = message.getSendTime();
+        sender = message.getSender();
+        receiver = message.getReceiver();
+    }
 
 }

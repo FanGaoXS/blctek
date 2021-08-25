@@ -60,7 +60,8 @@
     <resultMap id="MessageMap" type="com.blctek.messageserver.pojo.Message">
         <id column="id" property="id"/>
         <result column="content" property="content"/>
-        <result column="sendTime" property="receiveTime"/>
+        <result column="sendTime" property="sendTime"/>
+        <result column="receiveTime" property="receiveTime"/>
         <result column="sender" property="sender"/>
         <result column="receiver" property="receiver"/>
         <result column="isBroadcast" property="isBroadcast"/>
@@ -93,6 +94,22 @@
         WHERE
         id = #{id}
     </update>
+    <select id="selectListByPlateNumber"
+            resultMap="MessageMap">
+        SELECT
+            *
+        FROM
+            message
+        WHERE
+            sender = #{plateNumber}
+        OR
+            receiver = #{plateNumber}
+        ORDER BY
+            sendTime desc,id desc
+        <trim prefix="LIMIT">
+            <include refid="limitCondition"></include>
+        </trim>
+    </select>
     <!--查询所有（可分页，可单条件，可多条件）-->
     <select id="selectList"
             parameterType="com.blctek.messageserver.pojo.Message"
@@ -105,7 +122,7 @@
             <include refid="selectCondition"></include>
         </trim>
         ORDER BY
-            sendTime
+            sendTime desc,id desc
         <trim prefix="LIMIT">
             <include refid="limitCondition"></include>
         </trim>
@@ -133,5 +150,15 @@
         <trim prefix="WHERE" prefixOverrides="AND">
             <include refid="selectCondition"></include>
         </trim>
+    </select>
+    <select id="countByPlateNumber" resultType="long">
+        SELECT
+            count(id)
+        FROM
+            message
+        WHERE
+            sender = #{plateNumber}
+           OR
+            receiver = #{plateNumber}
     </select>
 </mapper>

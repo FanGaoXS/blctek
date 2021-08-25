@@ -48,7 +48,7 @@ public class Message extends BasePojo {
     private String receiver;
 
     /**
-     * 是否是广播
+     * 是否是广播（暂时没用）
      */
     private Boolean isBroadcast;
 
