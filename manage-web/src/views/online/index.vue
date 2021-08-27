@@ -44,14 +44,14 @@
                 align="center"
                 min-width="280">
                 <template slot-scope="scope">
-<!--                  <el-button
+                  <el-button
                     @click="handleButtonClick(scope.row)"
                     type="primary"
                     size="medium"
                     round
                     icon="el-icon-map-location"
                     :disabled="!scope.row.isOnline"
-                    >在地图上查看</el-button>-->
+                    >在地图上查看</el-button>
                   <el-badge is-dot :hidden="false" style="margin: 10px">
                     <el-button
                       type="warning"
@@ -60,13 +60,6 @@
                       round
                       @click="handleMessageButtonClick(scope.row)"
                       >查看消息</el-button>
-                    <el-button
-                      type="warning"
-                      size="medium"
-                      icon="el-icon-chat-line-round"
-                      round
-                      @click="handleMessageButtonClickTest(scope.row)"
-                    >查看消息-测试</el-button>
                   </el-badge>
                 </template>
               </el-table-column>

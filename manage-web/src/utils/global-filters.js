@@ -43,6 +43,7 @@ export function plateTypeFilter(plateType){
  * @returns {string}
  */
 export function timeFilter(time){
+
   return ' '+(new Date(time).toLocaleString())
 }
 

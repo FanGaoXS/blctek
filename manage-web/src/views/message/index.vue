@@ -1,3 +1,4 @@
+
 <template>
   <div class="app-container">
     <el-container>
@@ -6,9 +7,6 @@
         <el-descriptions
           border
           title="对方信息">
-          <template slot="extra">
-            <el-button type="primary" size="small" round>详细信息</el-button>
-          </template>
           <el-descriptions-item label="车牌号">
             {{yourself.vehicleNumber | plateNumberFilter}}
           </el-descriptions-item>
@@ -31,12 +29,13 @@
       </el-header>
 
       <el-main>
-        <message-record
-          v-for="item in recordList" :key="item.id"
-          :is-left="item.to === yourself.vehicleNumber"
-          :time="item.time | timeFilter "
-          :record="item.content"
-        ></message-record>
+        <div style="height: 400px">
+          <message-record-list
+            :key="reloadId"
+            :plate-number="plateNumber"
+            :myself="myself"
+          ></message-record-list>
+        </div>
       </el-main>
 
       <el-footer>
@@ -61,7 +60,7 @@
 
 <script>
 
-import MessageRecord from "@/views/message/components/MessageRecord";
+import MessageRecordList from "@/views/message/components/MessageRecordList";
 
 import {
   getVehicleByVehicleNumber
@@ -74,17 +73,12 @@ import {
 } from "@/utils/global-filters";
 
 import {
-  recordList
-} from "./data";
-
-import {
-  insertMessage,
-  getMessageListByPlateNumber
+  insertMessage
 } from "@/api/message";
 
 export default {
   components:{
-    MessageRecord
+    MessageRecordList
   },
   filters: {
     plateNumberFilter,
@@ -93,10 +87,10 @@ export default {
   },
   data() {
     return {
+      reloadId: +new Date(),
       buttonLoading: false,
       title: 'message',
       sendMessage: '',
-      recordList: recordList,
       //聊天对方
       yourself: {
         vehicleNumber: '',
@@ -147,8 +141,9 @@ export default {
           duration: 2000,
           showClose: true
         })
-        if (res.data) {
+        if (res.data) { //发送成功
           this.clearSendMessage();
+          this.reloadId += new Date() //改变messageList上绑定的key（达到刷新messageList组件的目的：重新获取聊天记录）
         }
         this.buttonLoading = false;
       }).catch(error=>{
