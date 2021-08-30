@@ -1,12 +1,20 @@
 <template>
 	<view>
+		<view style="color: red;">
+			<h2>已经连接的设备</h2>
+			<view>deviceId: {{selectedDevice.deviceId}}</view>
+			<view>name: {{selectedDevice.name}}</view>
+		</view>
+		<input type="text" v-model="message" />
 		<button @tap="buttonOpenBluetoothAdapter()">开始搜索附近设备</button>
-		<button @tap="buttonGetBluetoothDevices()">获取已发现或者已连接的蓝牙设备</button>
+		<!-- <button @tap="buttonGetBluetoothDevices()">获取已发现或者已连接的蓝牙设备</button> -->
+		<button @tap="buttonGetBLEDeviceServices()">获取当前已经连接BLE设备的可用服务</button>
 		<button @tap="stopBluetoothDevicesDiscovery()">停止搜索</button>
-		<view v-for="item in devicesList" :key="item.id" style="margin-top: 20rpx;">
-			<view>蓝牙设备id：{{item.deviceId}}</view>
-			<view>蓝牙信号强度：{{item.RSSI}}</view>
-			<view>蓝牙设备名称：{{item.name}}</view>
+		<button @tap="buttonSendMessage()">发送消息</button>
+		<view v-for="item in devicesList" :key="item.id" style="margin-top: 20rpx;" @tap="buttonItemClick(item)">
+			<view>deviceId：{{item.deviceId}}</view>
+			<view>RSSI：{{item.RSSI}}</view>
+			<view>name：{{item.name}}</view>
 			<view>advertisData:{{item.advertisData | ab2hex}}</view>
 			<view>advertisServiceUUIDs:{{item.advertisServiceUUIDs}}</view>
 			<view>localName:{{item.localName}}</view>
@@ -28,7 +36,14 @@
 		data() {
 			return {
 				title: '测试蓝牙',
-				devicesList: []
+				message: '',
+				devicesList: [],
+				selectedDevice: {
+					deviceId: undefined,
+					name: undefined,
+				},
+				serviceId: undefined,
+				characteristics:[]
 			}
 		},
 		onLoad() {
@@ -78,12 +93,6 @@
 					// console.log(res);	//返回新搜索到的设备列表 Array<Object>
 					const device = res.devices[0];	//搜到的设备
 					console.log("device: ",device);
-					/*console.log('name->',device.name);
-					console.log('deviceId->',device.deviceId);
-					console.log('RSSI->',device.RSSI);
-					console.log('advertisServiceUUIDs->',device.advertisServiceUUIDs);
-					console.log('localName->',device.localName);
-					console.log('serviceData->',device.serviceData);*/
 					if(this.devicesList.indexOf(device.deviceId)==-1){	//已搜到设备列表中不包含新搜到的蓝牙设备则加入
 						this.devicesList.push(device)
 					}
@@ -103,17 +112,125 @@
 					}
 				})
 			},
-			// 获取在蓝牙模块生效期间所有已发现的蓝牙设备。包括已经和本机处于连接状态的设备。
-			buttonGetBluetoothDevices(){
-				uni.getBluetoothDevices({
-					success: res=>{
-						console.log('getBluetoothDevices success->',res);
-						console.log(res.devices);
+			//创建BLE的连接（需要deviceId）
+			createBLEConnection(){
+				const deviceId = this.selectedDevice.deviceId
+				console.log('尝试与'+deviceId+'设备进行连接');
+				uni.createBLEConnection({
+					deviceId: deviceId,
+					success: res => {
+						console.log('createBLEConnection success->',res);
+						this.stopBluetoothDevicesDiscovery();	//连接完成后停止周围蓝牙的搜索
 					},
 					fail: error=>{
-						console.log('getBluetoothDevices fail->',error);
+						console.log('createBLEConnection fail->',error);
 					}
 				})
+			},
+			//获取当前BLE设备的可用服务
+			getBLEDeviceServices(){
+				const deviceId = this.selectedDevice.deviceId;
+				console.log('尝试获取'+deviceId+'设备的可用服务');
+				setTimeout(()=>{
+					uni.getBLEDeviceServices({
+						deviceId:deviceId,
+						success: (res) => {
+							console.log('getBLEDeviceServices success->',res);
+							const services = res.services;
+							for (let i = 0; i < services.length; i++) {
+								console.log(services[i]);
+								if(services[i].uuid.indexOf('6E40')!=-1){
+									this.serviceId = services[i].uuid; //存储服务的uuid
+									break;
+								}
+							}
+							this.getBLEDeviceCharacteristics();
+						},
+						fail: (error) => {
+							console.log('getBLEDeviceServices fail->',error);
+						}
+					})
+				},1000*10)
+			},
+			//获取该蓝牙的该服务的特征值
+			getBLEDeviceCharacteristics(){
+				const deviceId = this.selectedDevice.deviceId;
+				const serviceId = this.serviceId
+				console.log('尝试获取'+deviceId+'设备的'+serviceId+'服务的特征值');
+				setTimeout(()=>{
+					uni.getBLEDeviceCharacteristics({
+						deviceId: deviceId,
+						serviceId: serviceId,
+						success: (res) => {
+							console.log('getBLEDeviceCharacteristics success->',res);
+							const characteristics = res.characteristics;
+							this.characteristics = characteristics;  //将该服务的所有特征值存储
+							// for (let i = 0; i < characteristics.length; i++) {
+							// 	console.log(characteristics[i]);
+							// 	this.notifyBLECharacteristicValueChange(characteristics[i].uuid)
+							// }
+						},
+						fail: (error) => {
+							console.log('getBLEDeviceCharacteristics fail->',error);
+						}
+					})
+				},10*1000);
+			},
+			notifyBLECharacteristicValueChange(characteristicId){
+				const deviceId = this.selectedDevice.deviceId
+				const serviceId = this.serviceId
+				console.log('尝试通知'+characteristicId);
+				uni.notifyBLECharacteristicValueChange({
+					state: true,
+					deviceId: deviceId,
+					serviceId: serviceId,
+					characteristicId: characteristicId,
+					success: (res) => {
+						console.log('notifyBLECharacteristicValueChange success->',res);
+					},
+					fail: (error) => {
+						console.log('notifyBLECharacteristicValueChange fail->',error);
+					}
+				})
+			},
+			writeBLECharacteristicValue(characteristicId){
+				const deviceId = this.selectedDevice.deviceId
+				const serviceId = this.serviceId
+				console.log('尝试向'+characteristicId+'写入');
+				const buffer = new ArrayBuffer(8)
+				const dataView = new DataView(buffer)
+				console.log(dataView);
+				uni.writeBLECharacteristicValue({
+					deviceId,
+					serviceId,
+					characteristicId,
+					value: buffer,
+					success: (res) => {
+						console.log('writeBLECharacteristicValue success->',res);
+					},
+					fail: (error) => {
+						console.log('writeBLECharacteristicValue fail->',error);
+					}
+				})
+			},
+			//点击单个设备时的操作
+			buttonItemClick(item){
+				// console.log(item);
+				this.selectedDevice.deviceId = item.deviceId;
+				this.selectedDevice.name = item.name;
+				this.createBLEConnection();
+			},
+			buttonGetBLEDeviceServices(){
+				this.getBLEDeviceServices();
+			},
+			buttonSendMessage(){
+				let characteristicId = '';
+				for (let i = 0; i < this.characteristics.length; i++) {
+					if(this.characteristics[i].uuid.indexOf('6E400002')!=-1) {
+						characteristicId = this.characteristics[i].uuid
+					}
+				}
+				this.writeBLECharacteristicValue(characteristicId)
 			}
 		}
 	}
