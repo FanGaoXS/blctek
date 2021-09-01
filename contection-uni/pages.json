@@ -9,8 +9,7 @@
 		{
 			"path" : "pages/test/test",
 			"style" :{
-				"navigationBarTitleText": "测试",
-				"enablePullDownRefresh": true
+				"navigationBarTitleText": "测试"
 			}
 		}
 	],
