@@ -59,11 +59,11 @@
 	
 	import {
 		ab2hex
-		} from './filters.js'
+	} from './filters.js'
 	
 	export default {
 		filters: {
-			ab2hex
+
 		},
 		data() {
 			return {
@@ -209,20 +209,12 @@
 							console.log('getBLEDeviceServices success->',res);
 							const services = res.services;
 							this.serviceList = services;
-							// for (let i = 0; i < services.length; i++) {
-							// 	console.log(services[i]);
-							// 	if(services[i].uuid.indexOf('6E40')!=-1){
-							// 		this.serviceId = services[i].uuid; //存储服务的uuid
-							// 		break;
-							// 	}
-							// }
-							// this.getBLEDeviceCharacteristics();
 						},
 						fail: (error) => {
 							console.log('getBLEDeviceServices fail->',error);
 						}
 					})
-				},10*1000)
+				},5*1000)
 			},
 			//获取该蓝牙的该服务的特征值
 			getBLEDeviceCharacteristics(){
@@ -261,7 +253,7 @@
 						console.log('notifyBLECharacteristicValueChange success->',res);
 						setTimeout(()=>{
 							this.onBLECharacteristicValueChange();
-						},5*1000)
+						},0*1000)
 					},
 					fail: (error) => {
 						console.log('notifyBLECharacteristicValueChange fail->',error);
@@ -272,6 +264,7 @@
 				console.log('尝试监听特征值的变化');
 				uni.onBLECharacteristicValueChange(res=>{
 					console.log('onBLECharacteristicValueChange->',res);
+					console.log('监听到CharacteristicValue->',ab2hex(res.value));
 				})
 			},
 			writeBLECharacteristicValue(){
@@ -279,12 +272,14 @@
 				const deviceId = this.selectedDevice.deviceId;
 				const serviceId = this.selectedService.uuid;
 				const c12c = this.selectedCharacteristic.uuid;
-				const buffer = new ArrayBuffer(8);
+				const buffer1 = string2buffer('MSG:0416399:b2e23\\r\\n')
+				console.log(buffer1.length);
+				console.log(ab2hex(buffer1))
 				uni.writeBLECharacteristicValue({
 					deviceId,
 					serviceId,
 					characteristicId: c12c,
-					value: buffer,
+					value: buffer1,
 					success: (res) => {
 						console.log('writeBLECharacteristicValue success->',res);
 					},
