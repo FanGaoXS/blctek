@@ -1,6 +1,8 @@
 <template>
 	<view>
+		
 		<view class="item-container">
+			<input type="text" v-model="sendMessage" required/>
 			<button :disabled="selectedDevice.deviceId!==''" @tap="buttonClickOpenBT()">打开蓝牙并开始搜索附近设备</button>
 			<button :disabled="selectedService.uuid!==''" @tap="buttonClickGetServiceList()">获取该蓝牙的所有服务</button>
 			<button :disabled="selectedCharacteristic.uuid!==''" @tap="buttonClickGetCharacteristicList()">获取该蓝牙的服务的所有特征值</button>
@@ -14,7 +16,7 @@
 				<p>deviceId：{{item.deviceId}}</p>
 				<p>RSSI：{{item.RSSI}}</p>
 				<p>name：{{item.name}}</p>
-				<p>advertisData:{{item.advertisData | ab2hex}}</p>
+				<p>advertisData:{{item.advertisData | arrayBufferToHex}}</p>
 				<p>advertisServiceUUIDs:{{item.advertisServiceUUIDs}}</p>
 				<p>localName:{{item.localName}}</p>
 				<p>serviceData:{{item.serviceData}}</p>
@@ -58,12 +60,18 @@
 <script>
 	
 	import {
-		ab2hex
+		stringToGBK16,						// 字符串直接转GBK16进制字符
+		stringToArrayBuffer,			// 字符串转为ArrayBuffer类型
+		arrayBufferToHex,					// ArrayBuffer类型转为16进制
+		hexToString								// 16进制转为字符串
 	} from './filters.js'
 	
 	export default {
 		filters: {
-
+			stringToGBK16,
+			stringToArrayBuffer,
+			arrayBufferToHex,
+			hexToString
 		},
 		data() {
 			return {
@@ -72,23 +80,24 @@
 				receiveMessage: '',
 				deviceList: [],
 				selectedDevice: {
-					deviceId: '',
+					deviceId: 'F0:08:D1:DC:67:36',
 					name: '',
 				},
 				serviceList: [],
 				selectedService: {
-					uuid: '',
-					isPrimary: false
+					uuid: '6E400001-B5A3-F393-E0A9-E50E24DCCA9E',
+					isPrimary: true
 				},
 				characteristicList:[],
 				selectedCharacteristic:{
-					uuid: '',
+					uuid: '6E400002-B5A3-F393-E0A9-E50E24DCCA9E',
 					properties: {}
 				}
 			}
 		},
 		onLoad() {
-			this.defaultData();
+			// this.defaultData();
+			this.openBluetoothAdapter();
 		},
 		methods: {
 			defaultData(){
@@ -100,7 +109,7 @@
 				this.serviceList = []
 				this.selectedService = {
 					uuid: '',
-					isPrimary: false
+					isPrimary: true
 				}
 				this.characteristicList = []
 				this.selectedCharacteristic = {
@@ -113,6 +122,7 @@
 				uni.openBluetoothAdapter({	//检查本机蓝牙是否打开
 				  success:(res)=> {	//本机蓝牙已打开
 				    console.log('openBluetoothAdapter success->',res)
+						this.createBLEConnection();
 						this.startBluetoothDeviceDiscovery()	//开始搜索周围蓝牙
 				  },
 					fail:(error)=>{		//本机蓝牙未打开
@@ -178,10 +188,25 @@
 					deviceId: deviceId,
 					success: res => {
 						console.log('createBLEConnection success->',res);
+						this.setBLEMTU();
 						this.stopBluetoothDevicesDiscovery();	//连接完成后停止周围蓝牙的搜索
 					},
 					fail: error=>{
 						console.log('createBLEConnection fail->',error);
+					}
+				})
+			},
+			setBLEMTU(){
+				const deviceId = this.selectedDevice.deviceId
+				console.log('尝试修改'+deviceId+'BLE设备的MTU（最大传输单元）');
+				uni.setBLEMTU({
+					deviceId,
+					mtu: 500,
+					success: (res) => {
+						console.log('setBLEMTU success->',res);
+					},
+					fail: (error) => {
+						console.log('setBLEMTU fail->',error);
 					}
 				})
 			},
@@ -261,10 +286,10 @@
 				})
 			},
 			onBLECharacteristicValueChange(){
-				console.log('尝试监听特征值的变化');
+				console.log('开始监听特征值的变化');
 				uni.onBLECharacteristicValueChange(res=>{
 					console.log('onBLECharacteristicValueChange->',res);
-					console.log('监听到CharacteristicValue->',ab2hex(res.value));
+					console.log('监听到CharacteristicValue->',arrayBufferToHex(res.value));
 				})
 			},
 			writeBLECharacteristicValue(){
@@ -272,14 +297,17 @@
 				const deviceId = this.selectedDevice.deviceId;
 				const serviceId = this.selectedService.uuid;
 				const c12c = this.selectedCharacteristic.uuid;
-				const buffer1 = string2buffer('MSG:0416399:b2e23\\r\\n')
-				console.log(buffer1.length);
-				console.log(ab2hex(buffer1))
+				const id = '0416399';
+				let message = stringToGBK16(this.sendMessage);
+				const totalMessage = "MSG:" + id + ":" + message + "\r\n";
+				const buffer = stringToArrayBuffer(totalMessage);
+				console.log('欲发送的整体buffer的长度：'+buffer.byteLength);
+				console.log('欲发送的整体buffer的16进制：'+arrayBufferToHex(buffer))
 				uni.writeBLECharacteristicValue({
 					deviceId,
 					serviceId,
 					characteristicId: c12c,
-					value: buffer1,
+					value: buffer,
 					success: (res) => {
 						console.log('writeBLECharacteristicValue success->',res);
 					},

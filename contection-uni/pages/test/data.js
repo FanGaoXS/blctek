@@ -1,3 +1,21 @@
+const devices = [
+	{
+		deviceId: "F0:08:D1:DC:67:36",
+		name: "BLERepeater",
+		RSSI: -66,
+		localName: "BLERepeater",
+		advertisServiceUUIDs: []
+	},
+	{
+		deviceId: "94:B9:7E:87:C2:DE",
+		name: "BDmsg_TEST00",
+		RSSI: -61,
+		localName: "BDmsg_TEST00",
+		advertisServiceUUIDs: []
+	}
+]
+
+
 const services = [
 	{
 		uuid: "00001801-0000-1000-8000-00805F9B34FB",
