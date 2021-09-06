@@ -66,6 +66,14 @@
 		hexToString								// 16进制转为字符串
 	} from './filters.js'
 	
+	import {
+		setBTInfo,
+		getBTInfo,
+		removeBTInfo
+	} from '@/utils/BT-info.js'
+	
+	import BT_CONFIG from '@/utils/BT-config.js'
+	
 	export default {
 		filters: {
 			stringToGBK16,
@@ -80,40 +88,44 @@
 				receiveMessage: '',
 				deviceList: [],
 				selectedDevice: {
-					deviceId: 'F0:08:D1:DC:67:36',
+					deviceId: '',
 					name: '',
 				},
 				serviceList: [],
 				selectedService: {
-					uuid: '6E400001-B5A3-F393-E0A9-E50E24DCCA9E',
+					uuid: '',
 					isPrimary: true
 				},
 				characteristicList:[],
 				selectedCharacteristic:{
-					uuid: '6E400002-B5A3-F393-E0A9-E50E24DCCA9E',
+					uuid: '',
 					properties: {}
 				}
 			}
 		},
 		onLoad() {
-			// this.defaultData();
+			this.defaultData();
 			this.openBluetoothAdapter();
+		},
+		onUnload(){
+			
 		},
 		methods: {
 			defaultData(){
+				const BTInfo = getBTInfo()
 				this.deviceList = []
 				this.selectedDevice = {
-					deviceId: '',
-					name: ''
+					deviceId: BTInfo.deviceId,
+					name: BTInfo.name
 				},
 				this.serviceList = []
 				this.selectedService = {
-					uuid: '',
+					uuid: BT_CONFIG.availableService.uuid,
 					isPrimary: true
 				}
 				this.characteristicList = []
 				this.selectedCharacteristic = {
-					uuid: '',
+					uuid: BT_CONFIG.availableService.writeC12c.uuid,
 					properties:{}
 				}
 			},
@@ -201,7 +213,7 @@
 				console.log('尝试修改'+deviceId+'BLE设备的MTU（最大传输单元）');
 				uni.setBLEMTU({
 					deviceId,
-					mtu: 500,
+					mtu: 200,
 					success: (res) => {
 						console.log('setBLEMTU success->',res);
 					},

@@ -2335,3 +2335,9 @@ public class UserController {
 > **解决方案**
 >
 > 将密码加密放到后端执行，前端只做简单的hash处理
+
+## 小程序（2021/9/6更新）
+
+技术栈：Vue.js、uni-app、uView、luch-request
+
+开发工具：HBuilderX

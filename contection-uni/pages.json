@@ -1,4 +1,7 @@
 {
+	"easycom": {
+			"^u-(.*)": "uview-ui/components/u-$1/u-$1.vue"
+	},
 	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
 		{
 			"path": "pages/index/index",
@@ -11,10 +14,17 @@
 			"style" :{
 				"navigationBarTitleText": "测试"
 			}
+		},
+		{
+			"path" : "pages/contection/contection",
+			"style" :{
+				"navigationBarTitleText": "消息",
+				"enablePullDownRefresh": true
+			}
 		}
 	],
 	"condition":{
-		"current": 0,
+		"current": 2,
 		"list": [
 			{
 				"name": "测试启动页",
@@ -22,8 +32,13 @@
 				"query": ""
 			},
 			{
-				"name": "测试蓝牙",
+				"name": "测试蓝牙页",
 				"path": "pages/test/test",
+				"query": ""
+			},
+			{
+				"name": "测试消息页",
+				"path": "pages/contection/contection",
 				"query": ""
 			}
 		]

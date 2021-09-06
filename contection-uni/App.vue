@@ -1,3 +1,10 @@
+<style lang="scss">
+	@import "uview-ui/index.scss";
+	.app-container {
+		margin: 20rpx;
+	}
+</style>
+
 <script>
 	export default {
 		onLaunch: function() {
@@ -12,6 +19,4 @@
 	}
 </script>
 
-<style>
-	/*每个页面公共css */
-</style>
+

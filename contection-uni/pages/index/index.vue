@@ -17,7 +17,7 @@
 		},
 		onLoad() {
 			uni.reLaunch({
-				url: '../test/test'
+				url: '../contection/contection'
 			})
 		},
 		methods: {
