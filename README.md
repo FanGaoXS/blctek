@@ -2341,3 +2341,13 @@ public class UserController {
 技术栈：Vue.js、uni-app、uView、luch-request
 
 开发工具：HBuilderX
+
+uni-app：https://uniapp.dcloud.io/
+
+uni-app蓝牙开发：https://uniapp.dcloud.io/api/system/bluetooth
+
+uni-app蓝牙开发实例：https://www.vxzsk.com/1874.html（提取码：vxzsk1）
+
+uni-app低功耗蓝牙开发：https://uniapp.dcloud.io/api/system/ble
+
+uView：https://www.uviewui.com/
